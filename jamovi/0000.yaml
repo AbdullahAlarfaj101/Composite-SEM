@@ -1,0 +1,23 @@
+---
+title: cSEM Composite-based SEM
+name: CSEMnew
+version: 1.0.1
+jms: '1.0'
+authors:
+  - Abdullah Alarfaj, Abdullah Alamer
+maintainer: The package maintainer <Abdullah.Alarfaj@arfajgroup.com>
+date: '2025-12-01'
+type: R
+description: 'cSEM: Composite-based SEM'
+analyses:
+  - title: CSEMnew
+    name: test
+    ns: CSEMnew
+    category: analyses
+    menuGroup: CSEMnew
+    menuTitle: CSEMnew
+    arbitraryCode: true
+usesNative: true
+minApp: 1.0.8
+
+...

@@ -1,0 +1,154 @@
+---
+name:  test
+title: CSEMnew
+menuGroup: CSEMnew
+version: '1.0.0'
+jas: '1.2'
+arbitraryCode: true
+
+options:
+    - name: data
+      type: Data
+      description:
+          R: >
+             TO ADD
+
+    - name: .caller
+      type: String
+      title: submodule
+      default: "gui"
+      hidden: true
+      
+    - name: code
+      default: |
+      type: String
+      hidden: true
+      description:
+          R: >
+             The lavaan syntax
+            
+
+
+########################################################################################
+    - name: latent
+      type: Array
+      default:
+        - label: Latent1
+          vars: []
+      template:
+        type: Group
+        elements:
+          - name: label
+            type: String
+          - name: vars
+            type: Variables
+            suggested:
+              - continuous
+              - ordinal
+            permitted:
+              - numeric
+              - factor
+      description:
+        R: >
+            A list containing named lists that define the `label` of the latent endogenous variable(s) and
+            the `vars` that belong to that latent.
+########################################################################################
+
+########################################################################################
+
+########################################################################################
+    - name: composite
+      type: Array
+      # The 'action: Add' line has been removed from here
+      default:
+        - label: Composite1
+          vars: []
+      template:
+          type: Group
+          elements:
+            - name: label
+              type: String
+            - name: vars
+              type: Variables
+              suggested:
+                - continuous
+                - ordinal
+              permitted:
+                - numeric
+                - factor
+      description:
+          R: >
+              A list containing named lists that define the `label` of the latent exogenous variables and
+              the `vars` that belong to that latent.
+########################################################################################
+    # ... (the rest of your code is correct) ...
+    - name: multg
+      title: Multigroup Analysis
+      type: Variable
+########################################################################################
+
+########################################################################################
+    - name: alt
+      title: Estmation Method
+      type: List
+      options:
+        - title: PLS
+          name:  PLS
+        - title: GSCA
+          name:  GSCA
+        - title: MAXVAR
+          name:  MAXVAR
+      default: PLS
+########################################################################################
+    - name: varEq
+      title: Perform Bootstrapping
+      type: Bool
+      default: false
+########################################################################################
+    - name: bootR  # <-- هذا هو المدخل الرقمي الجديد
+      title: Number of Samples
+      type: Integer
+      min: 50
+      max: 5000
+      default: 500
+########################################################################################
+    - name: LinearBench
+      title: Linear Model Benchmark 
+      type: Bool
+      default: false
+########################################################################################
+    - name: ModelRelation
+      title: Model Relationships
+      type: String
+    
+    - name: ModelRelation2
+      title: Model Relationships
+      type: String
+
+    - name: ModelRelation3
+      title: Model Relationships
+      type: String
+
+    - name: ModelRelation4
+      title: Model Relationships
+      type: String
+
+    - name: ModelRelation5
+      title: Model Relationships
+      type: String
+
+########################################################################################    
+#    - name: endogenousTerms
+ #     title: Endogenous Latent Variable Models
+  #    type: Array
+   #   default: [[]]
+    #  template:
+     #     type: Terms
+      #description:
+       #   R: >
+        #     A list of lists specifying the models for with the mediators as dependent variables.
+    ########################################################################################
+    # --- قسم الخيارات في الأسفل (منطقة الربط) ---
+    
+    
+...

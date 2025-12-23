@@ -1,0 +1,14 @@
+# The title of your module as it will appear in the Jamovi library
+title: My Awesome Module
+# The name of your module (must match the folder name)
+name: YourModuleName
+# The version of your module
+version: 1.0.0
+# The minimum version of jamovi that this module requires
+jamovi: '2.0.0'
+
+# A list of your analyses
+analyses:
+    - title: Your Analysis Title    # العنوان الذي يظهر في قائمة التحليلات
+      name: semljgui                # الاسم البرمجي للتحليل
+      ui: semljgui                  # <<< هذا هو السطر الأهم لمنع الحذف

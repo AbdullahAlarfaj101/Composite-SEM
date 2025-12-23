@@ -1,0 +1,164 @@
+title: CSEMnew
+name: test
+jus: '3.0'
+stage: 0
+compilerMode: tame
+
+children:
+  - type: VariableSupplier
+    persistentItems: true
+    stretchFactor: 1
+    suggested:
+      - continuous
+      - ordinal
+    permitted:
+      - numeric
+    children:
+      
+      # --- Endogenous Section ---
+      - type: TargetLayoutBox
+        label: Latent
+        children:
+          - type: ListBox
+            name: latent
+            height: large
+            addButton: Add Latent
+            # عند الإضافة/الحذف نستدعي التحديث العام فقط
+            template:
+              type: LayoutBox
+              margin: normal
+              children:
+                - type: TextBox
+                  name: label
+                  valueKey:
+                    - label
+                  borderless: true
+                  stretchFactor: 1
+                  margin: normal
+                - type: VariablesListBox
+                  name: vars
+                  valueKey:
+                    - vars
+                  isTarget: true
+                  height: auto
+                  ghostText: drag variables here
+
+      # --- Exogenous Section ---
+      - type: TargetLayoutBox
+        label: Composite
+        children:
+          - type: ListBox
+            name: composite
+            height: large
+            addButton: Add Composite
+            template:
+              type: LayoutBox
+              margin: normal
+              children:
+                - type: TextBox
+                  name: label
+                  valueKey:
+                    - label
+                  borderless: true
+                  stretchFactor: 1
+                  margin: normal
+                - type: VariablesListBox
+                  name: vars
+                  valueKey:
+                    - vars
+                  isTarget: true
+                  height: auto
+                  ghostText: drag variables here
+
+      # --- Multigroup ---
+      - type: TargetLayoutBox
+        label: Multigroup Analysis
+        children:
+          - type: VariablesListBox
+            name: multg
+            maxItemCount: 1
+            isTarget: true
+
+  # --- Estimation Options ---
+  - type: CollapseBox
+    label: Model Estimation
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: LayoutBox
+        margin: large
+        style: inline
+        children:
+          - type: ComboBox
+            name: alt
+
+  # --- Bootstrapping ---
+  - type: CollapseBox
+    label: Bootstrapping
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: LayoutBox
+        margin: large
+        children:
+          - type: CheckBox
+            name: varEq
+          - type: Label
+            label: "Note: Larger numbers require larger estimation time"
+            stretchFactor: 1    # لضمان أن يأخذ النص راحته في العرض
+            margin: small
+          - type: TextBox
+            name: bootR
+            format: number
+            enable: (varEq)
+
+  # --- Benchmark ---
+  - type: CollapseBox
+    label: Benchmark
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: LayoutBox
+        margin: large
+        style: inline
+        children:
+          - type: CheckBox
+            name: LinearBench
+
+  # --- Structural Relations (Text) ---
+  - type: CollapseBox
+    label: Model Relationships (Text)
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: LayoutBox
+        margin: large
+        stretchFactor: 1
+        children:
+          - type: Label
+            label: "Note: Y ~ X (Example of Effect) , Y ~~ X (Example of Correlation)"
+            stretchFactor: 1    # لضمان أن يأخذ النص راحته في العرض
+            margin: small
+          - type: TextBox
+            name: ModelRelation
+            format: string
+            stretchFactor: 1    
+          - type: TextBox
+            name: ModelRelation2
+            format: string
+            stretchFactor: 1
+          - type: TextBox
+            name: ModelRelation3
+            format: string
+            stretchFactor: 1
+          - type: TextBox
+            name: ModelRelation4
+            format: string
+            stretchFactor: 1
+          - type: TextBox
+            name: ModelRelation5
+            format: string
+            stretchFactor: 1
+
+
+  
