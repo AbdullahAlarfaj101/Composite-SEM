@@ -4,7 +4,7 @@ title: CSEM
 jrs:   '1.1'
 
 items:
-    - name: constructsTable  # <-- تأكد من أن هذا الاسم موجود ومكتوب هكذا
+    - name: constructsTable
       title: 'Model Structure Summary'
       type: Table
       columns:
