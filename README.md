@@ -1,4 +1,6 @@
-Composite-SEM (CSEMnew) for jamovi
+Composite-SEM for jamovi
+
+
 Composite-SEM is a comprehensive module for jamovi designed to estimate, analyze, test, and study linear and multi-group structural equation models. Built upon the robust cSEM R package, this module brings professional-grade composite-based Structural Equation Modeling (SEM) to a user-friendly graphical interface.
 
 Core Features
