@@ -148,7 +148,6 @@ options:
        #   R: >
         #     A list of lists specifying the models for with the mediators as dependent variables.
     ########################################################################################
-    # --- قسم الخيارات في الأسفل (منطقة الربط) ---
     
     
 ...
