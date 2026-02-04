@@ -7,12 +7,12 @@ testClass <- R6::R6Class("testClass",
                          private = list(
                            .run = function() {
                              
-                             # --- 1. الحصول على مراجع للجداول ---
+                             # --- 1. Initialize Table References ---
                              summaryTable <- self$results$constructsTable
                              output_table <- self$results$csemOutput
                              
                              # ------------------------------------------------------------------
-                             # خطوة 1: التحقق من العلاقات (Structural Model Check)
+                             # Step 1: Structural Model Validation
                              # ------------------------------------------------------------------
                              raw_relations <- c(
                                self$options$ModelRelation,
@@ -21,28 +21,32 @@ testClass <- R6::R6Class("testClass",
                                self$options$ModelRelation4,
                                self$options$ModelRelation5
                              )
+                             
+                             # Filter out empty strings to find valid structural relations
                              valid_relations <- raw_relations[nzchar(raw_relations)]
                              structural_input <- paste(valid_relations, collapse = '\n')
                              
-                             # تحديد الوضع: هل هو "تلقائي" (فارغ) أم "يدوي" (محدد)؟
+                             # Determine Mode: "Auto" (empty) vs "Manual" (user-defined)
                              is_auto_mode <- (nchar(structural_input) == 0)
                              
-                             # --- 2. بناء نموذج القياس (Measurement Model) ---
+                             # --- 2. Measurement Model Construction ---
                              measurement_parts <- list()
                              hasCommonFactors <- FALSE 
                              active_constructs <- c() 
                              ignored_vars <- c()
                              
+                             # Helper function to check if a construct is used in the structural syntax
                              is_used_in_structure <- function(label, text) {
                                pattern <- paste0("\\b", label, "\\b")
                                return(grepl(pattern, text))
                              }
                              
-                             # أ) معالجة المتغيرات الكامنة (Reflective)
+                             # A) Process Latent Variables (Reflective)
                              if (length(self$options$latent) > 0) {
                                for (item in self$options$latent) {
                                  if (length(item$vars) > 0 && nzchar(item$label)) {
                                    
+                                   # Include only if in auto mode or explicitly used in the structural model
                                    if (is_auto_mode || is_used_in_structure(item$label, structural_input)) {
                                      formula <- glue::glue("{item$label} =~ {paste(item$vars, collapse = ' + ')}")
                                      measurement_parts <- c(measurement_parts, formula)
@@ -61,7 +65,7 @@ testClass <- R6::R6Class("testClass",
                                }
                              }
                              
-                             # ب) معالجة المتغيرات المركبة (Formative)
+                             # B) Process Composite Variables (Formative)
                              if (length(self$options$composite) > 0) {
                                for (item in self$options$composite) {
                                  if (length(item$vars) > 0 && nzchar(item$label)) {
@@ -83,6 +87,7 @@ testClass <- R6::R6Class("testClass",
                                }
                              }
                              
+                             # Exit if no constructs are defined
                              if (length(measurement_parts) == 0) {
                                output_table$setContent("No constructs defined or matched.")
                                return()
@@ -90,34 +95,34 @@ testClass <- R6::R6Class("testClass",
                              
                              measurement_string <- paste(measurement_parts, collapse = '\n')
                              
-                             # --- 3. بناء النموذج الهيكلي (Structural Model Logic) ---
+                             # --- 3. Structural Model Logic ---
                              final_structural_part <- ""
                              
                              if (is_auto_mode) {
-                               # الوضع التلقائي
+                               # Automatic Mode: Correlate all constructs
                                if (length(active_constructs) > 1) {
-                                 # !!! التعديل هنا: استبدال <-> بـ ~~ !!!
+                                 # Use '~~' for correlation in cSEM syntax
                                  pairs <- utils::combn(active_constructs, 2, function(x) paste(x, collapse = " ~~ "))
                                  final_structural_part <- paste(pairs, collapse = "\n")
                                } else {
                                  final_structural_part <- ""
                                }
                              } else {
-                               # الوضع اليدوي
+                               # Manual Mode: Use user-defined relations
                                final_structural_part <- structural_input
                              }
                              
-                             # تجميع النموذج النهائي
+                             # Assemble final model syntax
                              model <- paste(measurement_string, final_structural_part, sep = '\n\n')
                              
-                             # --- 4. إعداد متغيرات التحليل ---
+                             # --- 4. Setup Analysis Variables ---
                              multGroupVar <- self$options$multg
                              estimationModel <- self$options$alt
                              useBootstrap <- self$options$varEq
                              bootstrapSamples <- self$options$bootR
                              runLinearBench <- self$options$LinearBench
                              
-                             # --- 5. تنفيذ التحليل ---
+                             # --- 5. Execution ---
                              tryCatch({
                                
                                csem_args <- list(
@@ -125,10 +130,12 @@ testClass <- R6::R6Class("testClass",
                                  .model = model
                                )
                                
+                               # Grouping/MGA variable
                                if (!is.null(multGroupVar) && multGroupVar != "") {
                                  csem_args$.id <- multGroupVar
                                }
                                
+                               # Set weight scheme based on mode
                                if (estimationModel == 'PLS') {
                                  if (is_auto_mode) {
                                    csem_args$.PLS_weight_scheme_inner <- "factorial"
@@ -139,6 +146,7 @@ testClass <- R6::R6Class("testClass",
                                  csem_args$.approach_weights <- estimationModel
                                }
                                
+                               # Resampling settings
                                if (useBootstrap == TRUE) {
                                  csem_args$.resample_method <- "bootstrap"
                                  csem_args$.R <- bootstrapSamples
@@ -146,7 +154,7 @@ testClass <- R6::R6Class("testClass",
                                
                                out <- do.call(cSEM::csem, csem_args)
                                
-                               # --- 6. العرض والنتائج ---
+                               # --- 6. Results Visualization ---
                                summary_text <- capture.output(print(cSEM::summarize(out)))
                                summary_string <- paste(summary_text, collapse = '\n')
                                
@@ -156,7 +164,7 @@ testClass <- R6::R6Class("testClass",
                                  assess_string <- paste("\n\n\n--- Assess Results (PLS Only) ---\n\n", paste(assess_text, collapse = '\n'))
                                }
                                
-                               # Multigroup
+                               # Handle Multigroup Analysis (MGA)
                                mga_output <- ""
                                mga_header <- ""
                                if (!is.null(multGroupVar) && multGroupVar != "") {
@@ -175,7 +183,7 @@ testClass <- R6::R6Class("testClass",
                                  })
                                }
                                
-                               # Linear Bench
+                               # Handle Linear Benchmark
                                linear_bench_output <- ""
                                if (runLinearBench == TRUE) {
                                  linear_bench_output <- tryCatch({
