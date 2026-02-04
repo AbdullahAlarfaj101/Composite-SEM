@@ -23,7 +23,6 @@ children:
             name: latent
             height: large
             addButton: Add Latent
-            # عند الإضافة/الحذف نستدعي التحديث العام فقط
             template:
               type: LayoutBox
               margin: normal
@@ -105,7 +104,7 @@ children:
             name: varEq
           - type: Label
             label: "Note: Larger numbers require larger estimation time"
-            stretchFactor: 1    # لضمان أن يأخذ النص راحته في العرض
+            stretchFactor: 1  
             margin: small
           - type: TextBox
             name: bootR
@@ -137,7 +136,7 @@ children:
         children:
           - type: Label
             label: "Note: Y ~ X (Example of Effect) , Y ~~ X (Example of Correlation)"
-            stretchFactor: 1    # لضمان أن يأخذ النص راحته في العرض
+            stretchFactor: 1    
             margin: small
           - type: TextBox
             name: ModelRelation
