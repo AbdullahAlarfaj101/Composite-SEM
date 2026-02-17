@@ -17,6 +17,13 @@ analyses:
     menuGroup: CSEMnew
     menuTitle: CSEMnew
     arbitraryCode: true
+datasets:
+  - name: cSEM_data
+    path: cSEM_data.csv
+    description: Test data for cSEM Motive ~~ Skills correlations
+    tags:
+      - cSEM
+      - correlations
 usesNative: true
 minApp: 1.0.8
 
