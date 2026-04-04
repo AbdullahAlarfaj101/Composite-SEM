@@ -201,9 +201,9 @@ testClass <- R6::R6Class("testClass",
                                }
                                
                                mode_msg <- if (is_auto_mode) {
-                                 "\n[Mode: Auto-Correlation (Factorial)] No relationships defined. All constructs correlated using '~~'.\n"
+                                 "\n Auto-Correlation model. No structural relationships defined.\n"
                                } else {
-                                 "\n[Mode: User-Specified (Path)] Relationships defined. Using 'path'.\n"
+                                 "\n Mode: Structural relationships defined by the user\n"
                                }
                                
                                ignored_msg <- ""
