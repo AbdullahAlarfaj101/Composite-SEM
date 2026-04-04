@@ -24,8 +24,8 @@ testOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             ModelRelation5 = NULL, ...) {
 
             super$initialize(
-                package="CSEMnew",
-                name="test",
+                package="Composite-SEM",
+                name="Composite-SEM",
                 requiresData=TRUE,
                 ...)
 
@@ -181,7 +181,7 @@ testResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             super$initialize(
                 options=options,
                 name="",
-                title="CSEM")
+                title="Composite-SEM")
             self$add(jmvcore::Table$new(
                 options=options,
                 name="constructsTable",
@@ -202,7 +202,7 @@ testResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Preformatted$new(
                 options=options,
                 name="csemOutput",
-                title="cSEM Analysis Results"))}))
+                title="Results"))}))
 
 testBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "testBase",
@@ -210,8 +210,8 @@ testBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     public = list(
         initialize = function(options, data=NULL, datasetId="", analysisId="", revision=0) {
             super$initialize(
-                package = "CSEMnew",
-                name = "test",
+                package = "Composite-SEM",
+                name = "Composite-SEM",
                 version = c(1,0,0),
                 options = options,
                 results = testResults$new(options=options),
@@ -225,7 +225,7 @@ testBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 weightsSupport = 'auto')
         }))
 
-#' CSEMnew
+#' Composite-SEM
 #'
 #' 
 #' @param data TO ADD
