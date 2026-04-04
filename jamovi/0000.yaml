@@ -18,9 +18,9 @@ analyses:
     menuTitle: CSEMnew
     arbitraryCode: true
 datasets:
-  - name: cSEM_data
-    path: cSEM_data.csv
-    description: Test data for cSEM Motive ~~ Skills correlations
+  - name: data for composite SEM
+    path: data_for_composite-SEM.omv
+    description: Test data for composite SEM Motive ~~ Skills correlations
     tags:
       - cSEM
       - correlations
