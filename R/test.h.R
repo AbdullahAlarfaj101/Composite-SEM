@@ -24,8 +24,8 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
             ModelRelation5 = NULL, ...) {
 
             super$initialize(
-                package="Composite-SEM",
-                name="Composite-SEM",
+                package="CompositeSEM",
+                name="CompositeSEM",
                 requiresData=TRUE,
                 ...)
 
@@ -181,7 +181,7 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
             super$initialize(
                 options=options,
                 name="",
-                title="Composite-SEM")
+                title="CompositeSEM")
             self$add(jmvcore::Table$new(
                 options=options,
                 name="constructsTable",
@@ -210,8 +210,8 @@ CompositeSEMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     public = list(
         initialize = function(options, data=NULL, datasetId="", analysisId="", revision=0) {
             super$initialize(
-                package = "Composite-SEM",
-                name = "Composite-SEM",
+                package = "CompositeSEM",
+                name = "CompositeSEM",
                 version = c(1,0,0),
                 options = options,
                 results = CompositeSEMResults$new(options=options),
@@ -225,7 +225,7 @@ CompositeSEMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 weightsSupport = 'auto')
         }))
 
-#' Composite-SEM
+#' CompositeSEM
 #'
 #' 
 #' @param data TO ADD
