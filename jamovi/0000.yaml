@@ -1,6 +1,6 @@
 ---
-title: cSEM Composite-based SEM
-name: CSEMnew
+title: Composite-SEM
+name: Composite-SEM
 version: 1.0.1
 jms: '1.0'
 authors:
