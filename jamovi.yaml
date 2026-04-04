@@ -1,14 +1,14 @@
 # The title of your module as it will appear in the Jamovi library
 title: Composite-SEM
 # The name of your module (must match the folder name)
-name: Composite-SEM
+name: CompositeSEM
 # The version of your module
-version: 1.0.0
+version: 1.0.1
 # The minimum version of jamovi that this module requires
 jamovi: '2.0.0'
 
 # A list of your analyses
 analyses:
-    - title: Composite-SEM   
-      name: Composite-SEM               
-      ui: Composite-SEM                 
+    - title: Composite-SEM
+      name: CompositeSEM
+      ui: CompositeSEM
