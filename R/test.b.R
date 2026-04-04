@@ -2,8 +2,8 @@
 
 #' @rdname jamovi
 #' @export
-testClass <- R6::R6Class("testClass",
-                         inherit = testBase,
+CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
+                         inherit = CompositeSEMBase,
                          private = list(
                            .run = function() {
                              
