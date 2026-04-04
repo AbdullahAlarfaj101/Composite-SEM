@@ -135,7 +135,7 @@ children:
         stretchFactor: 1
         children:
           - type: Label
-            label: "Note: Y ~ X (Example of Effect) , Y ~~ X (Example of Correlation)"
+            label: "Note: Y ~ X (Example of Effect) , (Correlations are estimated automatically)"
             stretchFactor: 1    
             margin: small
           - type: TextBox
