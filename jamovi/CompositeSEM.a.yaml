@@ -2,7 +2,7 @@
 name:  CompositeSEM
 title: Composite-SEM
 menuGroup: Composite-SEM
-version: '1.0.0'
+version: '1.0.1'
 jas: '1.2'
 arbitraryCode: true
 
