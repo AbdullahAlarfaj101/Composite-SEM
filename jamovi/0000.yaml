@@ -10,19 +10,19 @@ date: '2025-12-01'
 type: R
 description: 'cSEM: Composite-based SEM'
 analyses:
-  - title: CSEMnew
-    name: test
-    ns: CSEMnew
+  - title: Composite-SEM
+    name: Composite-SEM
+    ns: Composite-SEM
     category: analyses
-    menuGroup: CSEMnew
-    menuTitle: CSEMnew
+    menuGroup: Composite-SEM
+    menuTitle: Composite-SEM
     arbitraryCode: true
 datasets:
   - name: data for composite SEM
     path: data_for_composite-SEM.omv
-    description: Test data for composite SEM Motive ~~ Skills correlations
+    description: Test data for composite SEM
     tags:
-      - cSEM
+      - Composite-SEM
       - correlations
 usesNative: true
 minApp: 1.0.8
