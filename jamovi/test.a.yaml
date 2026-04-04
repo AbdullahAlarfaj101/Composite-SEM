@@ -1,7 +1,7 @@
 ---
-name:  test
-title: CSEMnew
-menuGroup: CSEMnew
+name:  Composite-SEM
+title: Composite-SEM
+menuGroup: Composite-SEM
 version: '1.0.0'
 jas: '1.2'
 arbitraryCode: true
