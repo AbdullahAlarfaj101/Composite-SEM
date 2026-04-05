@@ -1,6 +1,6 @@
 ---
 title: Composite-SEM
-name: Composite-SEM
+name: CompositeSEM
 version: 1.0.1
 jms: '1.0'
 authors:
@@ -8,11 +8,11 @@ authors:
 maintainer: The package maintainer <Abdullah.Alarfaj@arfajgroup.com>
 date: '2025-12-01'
 type: R
-description: 'cSEM: Composite-based SEM'
+description: 'Composite-SEM is a comprehensive module for jamovi designed to estimate, analyze, test, and study linear and multi-group structural equation models. Built upon the robust cSEM R package, this module brings professional-grade composite-based Structural Equation Modeling (SEM) to a user-friendly graphical interface.'
 analyses:
   - title: Composite-SEM
-    name: Composite-SEM
-    ns: Composite-SEM
+    name: CompositeSEM
+    ns: CompositeSEM
     category: analyses
     menuGroup: Composite-SEM
     menuTitle: Composite-SEM
