@@ -5,10 +5,68 @@
 CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                          inherit = CompositeSEMBase,
                          private = list(
+                           
+                           # =================================================================
+                           # .init() method: Runs instantly to prepare UI tables
+                           # =================================================================
+                           .init = function() {
+                             
+                             summaryTable <- self$results$constructsTable
+                             
+                             # Extract structural relations to determine active constructs
+                             raw_relations <- c(
+                               self$options$ModelRelation,
+                               self$options$ModelRelation2,
+                               self$options$ModelRelation3,
+                               self$options$ModelRelation4,
+                               self$options$ModelRelation5
+                             )
+                             
+                             valid_relations <- raw_relations[nzchar(raw_relations)]
+                             structural_input <- paste(valid_relations, collapse = '\n')
+                             is_auto_mode <- (nchar(structural_input) == 0)
+                             
+                             is_used_in_structure <- function(label, text) {
+                               pattern <- paste0("\\b", label, "\\b")
+                               return(grepl(pattern, text))
+                             }
+                             
+                             # Populate table for Latent Variables
+                             if (length(self$options$latent) > 0) {
+                               for (item in self$options$latent) {
+                                 if (length(item$vars) > 0 && nzchar(item$label)) {
+                                   if (is_auto_mode || is_used_in_structure(item$label, structural_input)) {
+                                     summaryTable$addRow(rowKey = item$label, values = list(
+                                       type = 'Latent (Reflective)', 
+                                       construct = item$label, 
+                                       indicators = paste(item$vars, collapse=', ')
+                                     ))
+                                   }
+                                 }
+                               }
+                             }
+                             
+                             # Populate table for Composite Variables
+                             if (length(self$options$composite) > 0) {
+                               for (item in self$options$composite) {
+                                 if (length(item$vars) > 0 && nzchar(item$label)) {
+                                   if (is_auto_mode || is_used_in_structure(item$label, structural_input)) {
+                                     summaryTable$addRow(rowKey = item$label, values = list(
+                                       type = 'Composite (Formative)', 
+                                       construct = item$label, 
+                                       indicators = paste(item$vars, collapse=', ')
+                                     ))
+                                   }
+                                 }
+                               }
+                             }
+                           },
+                           
+                           # =================================================================
+                           # .run() method: Runs the heavy statistical computations
+                           # =================================================================
                            .run = function() {
                              
-                             # --- 1. Initialize Table References ---
-                             summaryTable <- self$results$constructsTable
                              output_table <- self$results$csemOutput
                              
                              # ------------------------------------------------------------------
@@ -22,11 +80,8 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                self$options$ModelRelation5
                              )
                              
-                             # Filter out empty strings to find valid structural relations
                              valid_relations <- raw_relations[nzchar(raw_relations)]
                              structural_input <- paste(valid_relations, collapse = '\n')
-                             
-                             # Determine Mode: "Auto" (empty) vs "Manual" (user-defined)
                              is_auto_mode <- (nchar(structural_input) == 0)
                              
                              # --- 2. Measurement Model Construction ---
@@ -35,27 +90,18 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                              active_constructs <- c() 
                              ignored_vars <- c()
                              
-                             # Helper function to check if a construct is used in the structural syntax
                              is_used_in_structure <- function(label, text) {
                                pattern <- paste0("\\b", label, "\\b")
                                return(grepl(pattern, text))
                              }
                              
-                             # A) Process Latent Variables (Reflective)
+                             # A) Process Latent Variables
                              if (length(self$options$latent) > 0) {
                                for (item in self$options$latent) {
                                  if (length(item$vars) > 0 && nzchar(item$label)) {
-                                   
-                                   # Include only if in auto mode or explicitly used in the structural model
                                    if (is_auto_mode || is_used_in_structure(item$label, structural_input)) {
                                      formula <- glue::glue("{item$label} =~ {paste(item$vars, collapse = ' + ')}")
                                      measurement_parts <- c(measurement_parts, formula)
-                                     
-                                     summaryTable$addRow(rowKey = item$label, values = list(
-                                       type = 'Latent (Reflective)', 
-                                       construct = item$label, 
-                                       indicators = paste(item$vars, collapse=', ')
-                                     ))
                                      hasCommonFactors <- TRUE
                                      active_constructs <- c(active_constructs, item$label)
                                    } else {
@@ -65,20 +111,13 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                }
                              }
                              
-                             # B) Process Composite Variables (Formative)
+                             # B) Process Composite Variables
                              if (length(self$options$composite) > 0) {
                                for (item in self$options$composite) {
                                  if (length(item$vars) > 0 && nzchar(item$label)) {
-                                   
                                    if (is_auto_mode || is_used_in_structure(item$label, structural_input)) {
                                      formula <- glue::glue("{item$label} <~ {paste(item$vars, collapse = ' + ')}")
                                      measurement_parts <- c(measurement_parts, formula)
-                                     
-                                     summaryTable$addRow(rowKey = item$label, values = list(
-                                       type = 'Composite (Formative)', 
-                                       construct = item$label, 
-                                       indicators = paste(item$vars, collapse=', ')
-                                     ))
                                      active_constructs <- c(active_constructs, item$label)
                                    } else {
                                      ignored_vars <- c(ignored_vars, item$label)
@@ -99,20 +138,16 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                              final_structural_part <- ""
                              
                              if (is_auto_mode) {
-                               # Automatic Mode: Correlate all constructs
                                if (length(active_constructs) > 1) {
-                                 # Use '~~' for correlation in cSEM syntax
                                  pairs <- utils::combn(active_constructs, 2, function(x) paste(x, collapse = " ~~ "))
                                  final_structural_part <- paste(pairs, collapse = "\n")
                                } else {
                                  final_structural_part <- ""
                                }
                              } else {
-                               # Manual Mode: Use user-defined relations
                                final_structural_part <- structural_input
                              }
                              
-                             # Assemble final model syntax
                              model <- paste(measurement_string, final_structural_part, sep = '\n\n')
                              
                              # --- 4. Setup Analysis Variables ---
@@ -130,12 +165,10 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                  .model = model
                                )
                                
-                               # Grouping/MGA variable
                                if (!is.null(multGroupVar) && multGroupVar != "") {
                                  csem_args$.id <- multGroupVar
                                }
                                
-                               # Set weight scheme based on mode
                                if (estimationModel == 'PLS') {
                                  if (is_auto_mode) {
                                    csem_args$.PLS_weight_scheme_inner <- "factorial"
@@ -146,7 +179,6 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                  csem_args$.approach_weights <- estimationModel
                                }
                                
-                               # Resampling settings
                                if (useBootstrap == TRUE) {
                                  csem_args$.resample_method <- "bootstrap"
                                  csem_args$.R <- bootstrapSamples
@@ -164,7 +196,6 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                  assess_string <- paste("\n\n\n--- Assess Results (PLS Only) ---\n\n", paste(assess_text, collapse = '\n'))
                                }
                                
-                               # Handle Multigroup Analysis (MGA)
                                mga_output <- ""
                                mga_header <- ""
                                if (!is.null(multGroupVar) && multGroupVar != "") {
@@ -183,7 +214,6 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                  })
                                }
                                
-                               # Handle Linear Benchmark
                                linear_bench_output <- ""
                                if (runLinearBench == TRUE) {
                                  linear_bench_output <- tryCatch({
