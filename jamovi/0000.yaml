@@ -16,7 +16,7 @@ analyses:
     category: analyses
     menuGroup: CompositeSEM
     menuTitle: CompositeSEM
-    arbitraryCode: true
+    arbitraryCode: false
 datasets:
   - name: data for composite SEM
     path: data_for_composite-SEM.omv
