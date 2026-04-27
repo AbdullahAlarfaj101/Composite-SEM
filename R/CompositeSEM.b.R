@@ -100,7 +100,7 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                for (item in self$options$latent) {
                                  if (length(item$vars) > 0 && nzchar(item$label)) {
                                    if (is_auto_mode || is_used_in_structure(item$label, structural_input)) {
-                                     formula <- glue::glue("{item$label} =~ {paste(item$vars, collapse = ' + ')}")
+                                     formula <- paste0(item$label, " =~ ", paste(item$vars, collapse = " + "))
                                      measurement_parts <- c(measurement_parts, formula)
                                      hasCommonFactors <- TRUE
                                      active_constructs <- c(active_constructs, item$label)
@@ -116,7 +116,7 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                for (item in self$options$composite) {
                                  if (length(item$vars) > 0 && nzchar(item$label)) {
                                    if (is_auto_mode || is_used_in_structure(item$label, structural_input)) {
-                                     formula <- glue::glue("{item$label} <~ {paste(item$vars, collapse = ' + ')}")
+                                     formula <- paste0(item$label, " <~ ", paste(item$vars, collapse = " + "))
                                      measurement_parts <- c(measurement_parts, formula)
                                      active_constructs <- c(active_constructs, item$label)
                                    } else {
