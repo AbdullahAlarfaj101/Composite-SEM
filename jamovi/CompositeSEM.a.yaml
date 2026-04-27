@@ -4,7 +4,7 @@ title: CompositeSEM
 menuGroup: CompositeSEM
 version: '1.0.1'
 jas: '1.2'
-arbitraryCode: true
+arbitraryCode: false
 
 options:
     - name: data
