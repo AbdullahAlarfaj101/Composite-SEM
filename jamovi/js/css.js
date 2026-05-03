@@ -158,7 +158,7 @@ const css = `
 `;
 
 let node = document.createElement('style');
-node.innerHTML = css;
+node.textContent = css;
 document.body.appendChild(node);
 
 module.exports = undefined;
