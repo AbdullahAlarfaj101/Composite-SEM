@@ -14,7 +14,7 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                 list(label="Composite1", vars=list())),
             multg = NULL,
             alt = "PLS",
-            varEq = FALSE,
+            useBootstrap = FALSE,
             bootR = 500,
             LinearBench = FALSE,
             ModelRelation = NULL,
@@ -92,9 +92,9 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                     "GSCA",
                     "MAXVAR"),
                 default="PLS")
-            private$..varEq <- jmvcore::OptionBool$new(
-                "varEq",
-                varEq,
+            private$..useBootstrap <- jmvcore::OptionBool$new(
+                "useBootstrap",
+                useBootstrap,
                 default=FALSE)
             private$..bootR <- jmvcore::OptionInteger$new(
                 "bootR",
@@ -128,7 +128,7 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
             self$.addOption(private$..composite)
             self$.addOption(private$..multg)
             self$.addOption(private$..alt)
-            self$.addOption(private$..varEq)
+            self$.addOption(private$..useBootstrap)
             self$.addOption(private$..bootR)
             self$.addOption(private$..LinearBench)
             self$.addOption(private$..ModelRelation)
@@ -144,7 +144,7 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
         composite = function() private$..composite$value,
         multg = function() private$..multg$value,
         alt = function() private$..alt$value,
-        varEq = function() private$..varEq$value,
+        useBootstrap = function() private$..useBootstrap$value,
         bootR = function() private$..bootR$value,
         LinearBench = function() private$..LinearBench$value,
         ModelRelation = function() private$..ModelRelation$value,
@@ -159,7 +159,7 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
         ..composite = NA,
         ..multg = NA,
         ..alt = NA,
-        ..varEq = NA,
+        ..useBootstrap = NA,
         ..bootR = NA,
         ..LinearBench = NA,
         ..ModelRelation = NA,
@@ -239,7 +239,7 @@ CompositeSEMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   latent.
 #' @param multg .
 #' @param alt .
-#' @param varEq .
+#' @param useBootstrap .
 #' @param bootR .
 #' @param LinearBench .
 #' @param ModelRelation .
@@ -270,7 +270,7 @@ CompositeSEM <- function(
                 list(label="Composite1", vars=list())),
     multg,
     alt = "PLS",
-    varEq = FALSE,
+    useBootstrap = FALSE,
     bootR = 500,
     LinearBench = FALSE,
     ModelRelation,
@@ -296,7 +296,7 @@ CompositeSEM <- function(
         composite = composite,
         multg = multg,
         alt = alt,
-        varEq = varEq,
+        useBootstrap = useBootstrap,
         bootR = bootR,
         LinearBench = LinearBench,
         ModelRelation = ModelRelation,
