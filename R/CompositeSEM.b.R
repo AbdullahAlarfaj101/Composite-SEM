@@ -13,7 +13,6 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                              
                              summaryTable <- self$results$constructsTable
                              
-                             # Extract structural relations to determine active constructs
                              raw_relations <- c(
                                self$options$ModelRelation,
                                self$options$ModelRelation2,
@@ -26,9 +25,11 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                              structural_input <- paste(valid_relations, collapse = '\n')
                              is_auto_mode <- (nchar(structural_input) == 0)
                              
+                             # FIX: Safe Regex for label matching (Option 1 from audit)
                              is_used_in_structure <- function(label, text) {
-                               pattern <- paste0("\\b", label, "\\b")
-                               return(grepl(pattern, text))
+                               safe_label <- gsub("([\\^$.|?*+(){}\\[\\]\\\\])", "\\\\\\1", label, perl = TRUE)
+                               pattern <- paste0("\\b", safe_label, "\\b")
+                               return(grepl(pattern, text, perl = TRUE))
                              }
                              
                              # Populate table for Latent Variables
@@ -69,9 +70,6 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                              
                              output_table <- self$results$csemOutput
                              
-                             # ------------------------------------------------------------------
-                             # Step 1: Structural Model Validation
-                             # ------------------------------------------------------------------
                              raw_relations <- c(
                                self$options$ModelRelation,
                                self$options$ModelRelation2,
@@ -84,15 +82,16 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                              structural_input <- paste(valid_relations, collapse = '\n')
                              is_auto_mode <- (nchar(structural_input) == 0)
                              
-                             # --- 2. Measurement Model Construction ---
                              measurement_parts <- list()
                              hasCommonFactors <- FALSE 
                              active_constructs <- c() 
                              ignored_vars <- c()
                              
+                             # FIX: Safe Regex for label matching (Option 1 from audit)
                              is_used_in_structure <- function(label, text) {
-                               pattern <- paste0("\\b", label, "\\b")
-                               return(grepl(pattern, text))
+                               safe_label <- gsub("([\\^$.|?*+(){}\\[\\]\\\\])", "\\\\\\1", label, perl = TRUE)
+                               pattern <- paste0("\\b", safe_label, "\\b")
+                               return(grepl(pattern, text, perl = TRUE))
                              }
                              
                              # A) Process Latent Variables
@@ -100,7 +99,12 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                for (item in self$options$latent) {
                                  if (length(item$vars) > 0 && nzchar(item$label)) {
                                    if (is_auto_mode || is_used_in_structure(item$label, structural_input)) {
-                                     formula <- paste0(item$label, " =~ ", paste(item$vars, collapse = " + "))
+                                     
+                                     # FIX: Handling spaces in variables using composeTerm()
+                                     safe_label <- jmvcore::composeTerm(item$label)
+                                     safe_vars <- sapply(item$vars, jmvcore::composeTerm)
+                                     formula <- paste0(safe_label, " =~ ", paste(safe_vars, collapse = " + "))
+                                     
                                      measurement_parts <- c(measurement_parts, formula)
                                      hasCommonFactors <- TRUE
                                      active_constructs <- c(active_constructs, item$label)
@@ -116,7 +120,12 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                for (item in self$options$composite) {
                                  if (length(item$vars) > 0 && nzchar(item$label)) {
                                    if (is_auto_mode || is_used_in_structure(item$label, structural_input)) {
-                                     formula <- paste0(item$label, " <~ ", paste(item$vars, collapse = " + "))
+                                     
+                                     # FIX: Handling spaces in variables using composeTerm()
+                                     safe_label <- jmvcore::composeTerm(item$label)
+                                     safe_vars <- sapply(item$vars, jmvcore::composeTerm)
+                                     formula <- paste0(safe_label, " <~ ", paste(safe_vars, collapse = " + "))
+                                     
                                      measurement_parts <- c(measurement_parts, formula)
                                      active_constructs <- c(active_constructs, item$label)
                                    } else {
@@ -126,7 +135,6 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                }
                              }
                              
-                             # Exit if no constructs are defined
                              if (length(measurement_parts) == 0) {
                                output_table$setContent("No constructs defined or matched.")
                                return()
@@ -134,12 +142,13 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                              
                              measurement_string <- paste(measurement_parts, collapse = '\n')
                              
-                             # --- 3. Structural Model Logic ---
                              final_structural_part <- ""
                              
                              if (is_auto_mode) {
                                if (length(active_constructs) > 1) {
-                                 pairs <- utils::combn(active_constructs, 2, function(x) paste(x, collapse = " ~~ "))
+                                 # Escape constructs for pairs too, just in case they have spaces
+                                 safe_active <- sapply(active_constructs, jmvcore::composeTerm)
+                                 pairs <- utils::combn(safe_active, 2, function(x) paste(x, collapse = " ~~ "))
                                  final_structural_part <- paste(pairs, collapse = "\n")
                                } else {
                                  final_structural_part <- ""
@@ -150,14 +159,16 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                              
                              model <- paste(measurement_string, final_structural_part, sep = '\n\n')
                              
-                             # --- 4. Setup Analysis Variables ---
+                             # --- Setup Analysis Variables ---
                              multGroupVar <- self$options$multg
                              estimationModel <- self$options$alt
-                             useBootstrap <- self$options$varEq
+                             
+                             # FIX: Updated variable name to useBootstrap
+                             useBootstrap <- self$options$useBootstrap
                              bootstrapSamples <- self$options$bootR
                              runLinearBench <- self$options$LinearBench
                              
-                             # --- 5. Execution ---
+                             # --- Execution ---
                              tryCatch({
                                
                                csem_args <- list(
@@ -186,7 +197,7 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                
                                out <- do.call(cSEM::csem, csem_args)
                                
-                               # --- 6. Results Visualization ---
+                               # --- Results Visualization ---
                                summary_text <- capture.output(print(cSEM::summarize(out)))
                                summary_string <- paste(summary_text, collapse = '\n')
                                
