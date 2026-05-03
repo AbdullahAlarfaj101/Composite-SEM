@@ -101,7 +101,7 @@ children:
         margin: large
         children:
           - type: CheckBox
-            name: varEq
+            name: useBootstrap
           - type: Label
             label: "Note: Larger numbers require larger estimation time"
             stretchFactor: 1  
@@ -109,7 +109,7 @@ children:
           - type: TextBox
             name: bootR
             format: number
-            enable: (varEq)
+            enable: (useBootstrap)
 
   # --- Benchmark ---
   - type: CollapseBox
