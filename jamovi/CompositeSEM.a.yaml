@@ -89,7 +89,7 @@ options:
 
 ########################################################################################
     - name: alt
-      title: Estmation Method
+      title: Estimation Method
       type: List
       options:
         - title: PLS
@@ -100,7 +100,7 @@ options:
           name:  MAXVAR
       default: PLS
 ########################################################################################
-    - name: varEq
+    - name: useBootstrap
       title: Perform Bootstrapping
       type: Bool
       default: false
