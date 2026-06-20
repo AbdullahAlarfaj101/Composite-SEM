@@ -1,153 +1,180 @@
 ---
-name:  CompositeSEM
+name: CompositeSEM
 title: CompositeSEM
 menuGroup: CompositeSEM
-version: '1.0.1'
+version: '1.3.0'
 jas: '1.2'
 arbitraryCode: false
 
 options:
-    - name: data
-      type: Data
-      description:
-          R: >
-             TO ADD
+- name: data
+  type: Data
+  description:
+    R: >
+      TO ADD
 
-    - name: .caller
+- name: .caller
+  type: String
+  title: submodule
+  default: "gui"
+  hidden: true
+
+- name: code
+  default: |
+  type: String
+  hidden: true
+  description:
+    R: >
+      The lavaan syntax
+
+########################################################################################
+- name: latent
+  type: Array
+  default:
+  - label: Latent1
+    vars: []
+  template:
+    type: Group
+    elements:
+    - name: label
       type: String
-      title: submodule
-      default: "gui"
-      hidden: true
-      
-    - name: code
-      default: |
+    - name: vars
+      type: Variables
+      suggested:
+      - continuous
+      - ordinal
+      permitted:
+      - numeric
+      - factor
+  description:
+    R: >
+      A list containing named lists that define the `label` of the latent endogenous variable(s) and
+      the `vars` that belong to that latent.
+########################################################################################
+
+########################################################################################
+- name: composite
+  type: Array
+  default:
+  - label: Composite1
+    vars: []
+  template:
+    type: Group
+    elements:
+    - name: label
       type: String
-      hidden: true
-      description:
-          R: >
-             The lavaan syntax
-            
-
-
-########################################################################################
-    - name: latent
-      type: Array
-      default:
-        - label: Latent1
-          vars: []
-      template:
-        type: Group
-        elements:
-          - name: label
-            type: String
-          - name: vars
-            type: Variables
-            suggested:
-              - continuous
-              - ordinal
-            permitted:
-              - numeric
-              - factor
-      description:
-        R: >
-            A list containing named lists that define the `label` of the latent endogenous variable(s) and
-            the `vars` that belong to that latent.
+    - name: vars
+      type: Variables
+      suggested:
+      - continuous
+      - ordinal
+      permitted:
+      - numeric
+      - factor
+  description:
+    R: >
+      A list containing named lists that define the `label` of the composite variables and
+      the `vars` that belong to that composite.
 ########################################################################################
 
+- name: multg
+  title: Multigroup Analysis
+  type: Variable
+
+########################################################################################
+- name: alt
+  title: Estimation Method
+  type: List
+  options:
+  - title: PLS
+    name: PLS
+  - title: GSCA
+    name: GSCA
+  - title: MAXVAR
+    name: MAXVAR
+  default: PLS
+########################################################################################
+- name: useBootstrap
+  title: Perform bootstrapping
+  type: Bool
+  default: false
+########################################################################################
+- name: bootR
+  title: Number of samples
+  type: Integer
+  min: 50
+  max: 5000
+  default: 500
+########################################################################################
+- name: LinearBench
+  title: Model's out-of-sample predictive power
+  type: Bool
+  default: false
+
+- name: predictFolds
+  title: Number of folds
+  type: Integer
+  min: 2
+  max: 100
+  default: 10
+
+
+
+
+
+- name: endogenousClass
+  title: Endogenous Constructs
+  type: Terms
+  default: []
+  description:
+    R: >
+      Constructs classified as endogenous outcomes for directional structural modeling.
 ########################################################################################
 
 ########################################################################################
-    - name: composite
-      type: Array
-      # The 'action: Add' line has been removed from here
-      default:
-        - label: Composite1
-          vars: []
-      template:
-          type: Group
-          elements:
-            - name: label
-              type: String
-            - name: vars
-              type: Variables
-              suggested:
-                - continuous
-                - ordinal
-              permitted:
-                - numeric
-                - factor
-      description:
-          R: >
-              A list containing named lists that define the `label` of the latent exogenous variables and
-              the `vars` that belong to that latent.
-########################################################################################
-    # ... (the rest of your code is correct) ...
-    - name: multg
-      title: Multigroup Analysis
-      type: Variable
+- name: exogenousClass
+  title: Exogenous Constructs
+  type: Terms
+  default: []
+  description:
+    R: >
+      Constructs classified as exogenous predictors for directional structural modeling.
 ########################################################################################
 
 ########################################################################################
-    - name: alt
-      title: Estimation Method
-      type: List
-      options:
-        - title: PLS
-          name:  PLS
-        - title: GSCA
-          name:  GSCA
-        - title: MAXVAR
-          name:  MAXVAR
-      default: PLS
+- name: endogenousTerms
+  title: Endogenous Variables Models
+  type: Array
+  default:
+  - []
+  template:
+    type: Terms
+  description:
+    R: >
+      A list of structural predictor term sets, one per construct.
+      Each entry corresponds to a latent or composite construct in order.
 ########################################################################################
-    - name: useBootstrap
-      title: Perform Bootstrapping
-      type: Bool
-      default: false
-########################################################################################
-    - name: bootR 
-      title: Number of Samples
-      type: Integer
-      min: 50
-      max: 5000
-      default: 500
-########################################################################################
-    - name: LinearBench
-      title: Linear Model Benchmark 
-      type: Bool
-      default: false
-########################################################################################
-    - name: ModelRelation
-      title: Model Relationships
-      type: String
-    
-    - name: ModelRelation2
-      title: Model Relationships
-      type: String
 
-    - name: ModelRelation3
-      title: Model Relationships
-      type: String
+- name: exactFit
+  title: Estimate exact fit test (bootstrap needs to be activated first)
+  type: Bool
+  default: false
 
-    - name: ModelRelation4
-      title: Model Relationships
-      type: String
 
-    - name: ModelRelation5
-      title: Model Relationships
-      type: String
 
-########################################################################################    
-#    - name: endogenousTerms
- #     title: Endogenous Latent Variable Models
-  #    type: Array
-   #   default: [[]]
-    #  template:
-     #     type: Terms
-      #description:
-       #   R: >
-        #     A list of lists specifying the models for with the mediators as dependent variables.
-    ########################################################################################
-    
-    
+- name: showCompositeLoadings
+  title: Show outer loadings of composites (absolute contribution)
+  type: Bool
+  default: false
+
+
+
+- name: disattenuate
+  title: Turn off disattenuation (possible bias)
+  type: Bool
+  default: false
+
+
+
+
 ...
