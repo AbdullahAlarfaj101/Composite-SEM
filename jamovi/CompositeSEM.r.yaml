@@ -17,8 +17,506 @@ items:
         - name: indicators
           title: 'Indicators'
           type: text
+
+    - name: infoTable
+      title: 'Model Information'
+      type: Table
+      clearWith:
+        - data
+        - latent
+        - composite
+        - multg
+        - alt
+        - useBootstrap
+        - bootR
+        - LinearBench
+        - endogenousClass
+        - exogenousClass
+        - endogenousTerms
+        - disattenuate
+      columns:
+        - name: group
+          title: 'Group'
+          type: text
+          visible: (multg)
+        - name: property
+          title: 'Property'
+          type: text
+        - name: value
+          title: 'Value'
+          type: text
+
+    - name: fitTable
+      title: 'Model Fit Indices'
+      type: Table
+      clearWith:
+        - data
+        - latent
+        - composite
+        - multg
+        - alt
+        - useBootstrap
+        - bootR
+        - LinearBench
+        - endogenousClass
+        - exogenousClass
+        - endogenousTerms
+        - disattenuate
+      columns:
+        - name: group
+          title: 'Group'
+          type: text
+          visible: (multg)
+        - name: metric
+          title: 'Metric'
+          type: text
+        - name: value
+          title: 'Value'
+          type: number
+
+    - name: exactFitTable
+      title: 'Exact Fit Test'
+      type: Table
+      visible: false
+      clearWith:
+        - data
+        - latent
+        - composite
+        - multg
+        - alt
+        - useBootstrap
+        - bootR
+        - LinearBench
+        - exactFit
+        - disattenuate
+      columns:
+        - name: group
+          title: 'Group'
+          type: text
+          visible: (multg)
+        - name: measure
+          title: 'Distance measure'
+          type: text
+        - name: stat
+          title: 'Test statistic'
+          type: number
+        - name: crit
+          title: 'Critical value (95%)'
+          type: number
+        - name: decision
+          title: 'Decision'
+          type: text
+
+    - name: outerCompositesTable
+      title: 'Outer Model of Composites'
+      type: Table
+      clearWith:
+        - data
+        - latent
+        - composite
+        - multg
+        - alt
+        - useBootstrap
+        - bootR
+        - LinearBench
+        - endogenousClass
+        - exogenousClass
+        - endogenousTerms
+        - disattenuate
+        - showCompositeLoadings
+      columns:
+        - name: group
+          title: 'Group'
+          type: text
+          visible: (multg)
+        - name: construct
+          title: 'Construct'
+          type: text
+        - name: indicator
+          title: 'Indicator'
+          type: text
+        - name: relation
+          title: 'Relation'
+          type: text
+          visible: (showCompositeLoadings)
+        - name: estimate
+          title: 'Std estimate'
+          type: number
+        - name: se
+          title: 'SE'
+          type: number
+          visible: (useBootstrap)
+        - name: cil
+          title: 'Lower'
+          type: number
+          superTitle: '95% Confidence Interval'
+          visible: (useBootstrap)
+        - name: ciu
+          title: 'Upper'
+          type: number
+          superTitle: '95% Confidence Interval'
+          visible: (useBootstrap)
+        - name: p
+          title: 'p-value'
+          type: number
+          format: zto,pvalue
+          visible: (useBootstrap)
+
+    - name: outerCommonFactorsTable
+      title: 'Outer Model of Common Factors'
+      type: Table
+      clearWith:
+        - data
+        - latent
+        - composite
+        - multg
+        - alt
+        - useBootstrap
+        - bootR
+        - LinearBench
+        - endogenousClass
+        - exogenousClass
+        - endogenousTerms
+        - disattenuate
+      columns:
+        - name: group
+          title: 'Group'
+          type: text
+          visible: (multg)
+        - name: construct
+          title: 'Construct'
+          type: text
+        - name: indicator
+          title: 'Indicator'
+          type: text
+        - name: estimate
+          title: 'Std estimate'
+          type: number
+        - name: se
+          title: 'SE'
+          type: number
+          visible: (useBootstrap)
+        - name: cil
+          title: 'Lower'
+          type: number
+          superTitle: '95% Confidence Interval'
+          visible: (useBootstrap)
+        - name: ciu
+          title: 'Upper'
+          type: number
+          superTitle: '95% Confidence Interval'
+          visible: (useBootstrap)
+        - name: p
+          title: 'p-value'
+          type: number
+          format: zto,pvalue
+          visible: (useBootstrap)
+
+    - name: reliabilityTable
+      title: 'Construct Reliability (Common Factors)'
+      type: Table
+      clearWith:
+        - data
+        - latent
+        - composite
+        - multg
+        - alt
+        - useBootstrap
+        - bootR
+        - LinearBench
+        - endogenousClass
+        - exogenousClass
+        - endogenousTerms
+        - disattenuate
+      columns:
+        - name: group
+          title: 'Group'
+          type: text
+          visible: (multg)
+        - name: construct
+          title: 'Construct'
+          type: text
+        - name: alpha
+          title: "Cronbach's alpha (α)"
+          type: number
+        - name: rhoC
+          title: "Jöreskog's rho (ω)"
+          superTitle: "Composite Reliability"
+          type: number
+        - name: rhoA
+          title: "Dijkstra-Henseler's rho (ρA)"
+          superTitle: "Composite Reliability"
+          type: number
+        - name: ave
+          title: 'AVE'
+          type: number
+
+    - name: htmtTable
+      title: 'Discriminant Validity (HTMT & HTMT2)'
+      type: Table
+      clearWith:
+        - data
+        - latent
+        - composite
+        - multg
+        - alt
+        - useBootstrap
+        - bootR
+        - LinearBench
+        - endogenousClass
+        - exogenousClass
+        - endogenousTerms
+        - disattenuate
+      columns:
+        - name: group
+          title: 'Group'
+          type: text
+          visible: (multg)
+        - name: c1
+          title: 'Construct 1'
+          type: text
+        - name: c2
+          title: 'Construct 2'
+          type: text
+        - name: htmt
+          title: 'HTMT'
+          type: number
+        - name: htmt2
+          title: 'HTMT2'
+          type: number
+
+    - name: vifModeBTable
+      title: 'Variance Inflation Factors (VIFs) for Mode B Weights'
+      type: Table
+      clearWith:
+        - data
+        - latent
+        - composite
+        - multg
+        - alt
+        - useBootstrap
+        - bootR
+        - LinearBench
+        - endogenousClass
+        - exogenousClass
+        - endogenousTerms
+        - disattenuate
+      columns:
+        - name: group
+          title: 'Group'
+          type: text
+          visible: (multg)
+        - name: construct
+          title: 'Construct'
+          type: text
+        - name: indicator
+          title: 'Indicator'
+          type: text
+        - name: vif
+          title: 'VIF Value'
+          type: number
+
+    - name: vcvTable
+      title: 'Construct Correlations'
+      type: Table
+      clearWith:
+        - data
+        - latent
+        - composite
+        - multg
+        - alt
+        - useBootstrap
+        - bootR
+        - LinearBench
+        - endogenousClass
+        - exogenousClass
+        - endogenousTerms
+        - disattenuate
+      columns:
+        - name: group
+          title: 'Group'
+          type: text
+          visible: (multg)
+        - name: c1
+          title: 'Construct 1'
+          type: text
+        - name: c2
+          title: 'Construct 2'
+          type: text
+        - name: estimate
+          title: 'Correlation'
+          type: number
+        - name: se
+          title: 'SE'
+          type: number
+        - name: cil
+          title: 'Lower'
+          type: number
+          superTitle: '95% Confidence Interval'
+        - name: ciu
+          title: 'Upper'
+          type: number
+          superTitle: '95% Confidence Interval'
+        - name: p
+          title: 'p-value'
+          type: number
+          format: zto,pvalue
+
+    - name: structuralTable
+      title: 'Inner Model (Structural Relationships)'
+      type: Table
+      clearWith:
+        - data
+        - latent
+        - composite
+        - multg
+        - alt
+        - useBootstrap
+        - bootR
+        - LinearBench
+        - endogenousClass
+        - exogenousClass
+        - endogenousTerms
+        - disattenuate
+      columns:
+        - name: group
+          title: 'Group'
+          type: text
+          visible: (multg)
+        - name: rhs
+          title: 'Predictor'
+          type: text
+        - name: lhs
+          title: 'Outcome'
+          type: text
+        - name: estimate
+          title: '<i>&beta;</i>'
+          type: number
+        - name: se
+          title: 'SE'
+          type: number
+          visible: (useBootstrap)
+        - name: cil
+          title: 'Lower'
+          type: number
+          superTitle: '95% Confidence Interval'
+          visible: (useBootstrap)
+        - name: ciu
+          title: 'Upper'
+          type: number
+          superTitle: '95% Confidence Interval'
+          visible: (useBootstrap)
+        - name: p
+          title: 'p-value'
+          type: number
+          format: zto,pvalue
+          visible: (useBootstrap)
+        - name: r2
+          title: 'R²'
+          type: number
+        - name: r2adj
+          title: 'Adj. R²'
+          type: number
+
+    - name: mediationTable
+      title: 'Indirect and Total Effects'
+      type: Table
+      visible: false
+      clearWith:
+        - data
+        - latent
+        - composite
+        - multg
+        - alt
+        - useBootstrap
+        - bootR
+        - LinearBench
+        - endogenousClass
+        - exogenousClass
+        - endogenousTerms
+        - disattenuate
+      columns:
+        - name: group
+          title: 'Group'
+          type: text
+          visible: (multg)
+        - name: type
+          title: 'Effect Type'
+          type: text
+        - name: rhs
+          title: 'Predictor'
+          type: text
+        - name: lhs
+          title: 'Outcome'
+          type: text
+        - name: estimate
+          title: '<i>&beta;</i>'
+          type: number
+        - name: se
+          title: 'SE'
+          type: number
+          visible: (useBootstrap)
+        - name: cil
+          title: 'Lower'
+          type: number
+          superTitle: '95% Confidence Interval'
+          visible: (useBootstrap)
+        - name: ciu
+          title: 'Upper'
+          type: number
+          superTitle: '95% Confidence Interval'
+          visible: (useBootstrap)
+        - name: p
+          title: 'p-value'
+          type: number
+          format: zto,pvalue
+          visible: (useBootstrap)
+
+    - name: predictTable
+      title: 'Model''s Out-of-Sample Predictive Power'
+      type: Table
+      visible: (LinearBench)
+      clearWith:
+        - data
+        - latent
+        - composite
+        - multg
+        - alt
+        - useBootstrap
+        - bootR
+        - LinearBench
+        - endogenousClass
+        - exogenousClass
+        - endogenousTerms
+        - disattenuate
+        - predictFolds
+      columns:
+        - name: group
+          title: 'Group'
+          type: text
+          visible: (multg)
+        - name: indicator
+          title: 'Indicator'
+          type: text
+        - name: maeTarget
+          title: 'MAE PLS'
+          type: number
+        - name: maeBench
+          title: 'MAE LM'
+          type: number
+        - name: rmseTarget
+          title: 'RMSE PLS'
+          type: number
+        - name: rmseBench
+          title: 'RMSE LM'
+          type: number
+        - name: q2
+          title: 'Q² predict'
+          type: number
+
     - name: csemOutput
-      title: 'Composite-SEM Analysis Results'
+      title: 'Multi-Group Analysis & Advanced Outputs'
       type: Preformatted
+      visible: (multg)
 
 ...
