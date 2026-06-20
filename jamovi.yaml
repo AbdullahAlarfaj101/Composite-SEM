@@ -1,9 +1,9 @@
-# The title of your module as it will appear in the Jamovi library
+# The title of the module as it will appear in the Jamovi library
 title: CompositeSEM
-# The name of your module (must match the folder name)
+# The name of the module
 name: CompositeSEM
-# The version of your module
-version: 1.0.1
+# The version of the module
+version: 1.3.0
 # The minimum version of jamovi that this module requires
 jamovi: '2.0.0'
 
