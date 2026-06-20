@@ -17,11 +17,14 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
             useBootstrap = FALSE,
             bootR = 500,
             LinearBench = FALSE,
-            ModelRelation = NULL,
-            ModelRelation2 = NULL,
-            ModelRelation3 = NULL,
-            ModelRelation4 = NULL,
-            ModelRelation5 = NULL, ...) {
+            predictFolds = 10,
+            endogenousClass = list(),
+            exogenousClass = list(),
+            endogenousTerms = list(
+                list()),
+            exactFit = FALSE,
+            showCompositeLoadings = FALSE,
+            disattenuate = FALSE, ...) {
 
             super$initialize(
                 package="CompositeSEM",
@@ -106,21 +109,40 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                 "LinearBench",
                 LinearBench,
                 default=FALSE)
-            private$..ModelRelation <- jmvcore::OptionString$new(
-                "ModelRelation",
-                ModelRelation)
-            private$..ModelRelation2 <- jmvcore::OptionString$new(
-                "ModelRelation2",
-                ModelRelation2)
-            private$..ModelRelation3 <- jmvcore::OptionString$new(
-                "ModelRelation3",
-                ModelRelation3)
-            private$..ModelRelation4 <- jmvcore::OptionString$new(
-                "ModelRelation4",
-                ModelRelation4)
-            private$..ModelRelation5 <- jmvcore::OptionString$new(
-                "ModelRelation5",
-                ModelRelation5)
+            private$..predictFolds <- jmvcore::OptionInteger$new(
+                "predictFolds",
+                predictFolds,
+                min=2,
+                max=100,
+                default=10)
+            private$..endogenousClass <- jmvcore::OptionTerms$new(
+                "endogenousClass",
+                endogenousClass,
+                default=list())
+            private$..exogenousClass <- jmvcore::OptionTerms$new(
+                "exogenousClass",
+                exogenousClass,
+                default=list())
+            private$..endogenousTerms <- jmvcore::OptionArray$new(
+                "endogenousTerms",
+                endogenousTerms,
+                default=list(
+                    list()),
+                template=jmvcore::OptionTerms$new(
+                    "endogenousTerms",
+                    NULL))
+            private$..exactFit <- jmvcore::OptionBool$new(
+                "exactFit",
+                exactFit,
+                default=FALSE)
+            private$..showCompositeLoadings <- jmvcore::OptionBool$new(
+                "showCompositeLoadings",
+                showCompositeLoadings,
+                default=FALSE)
+            private$..disattenuate <- jmvcore::OptionBool$new(
+                "disattenuate",
+                disattenuate,
+                default=FALSE)
 
             self$.addOption(private$...caller)
             self$.addOption(private$..code)
@@ -131,11 +153,13 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
             self$.addOption(private$..useBootstrap)
             self$.addOption(private$..bootR)
             self$.addOption(private$..LinearBench)
-            self$.addOption(private$..ModelRelation)
-            self$.addOption(private$..ModelRelation2)
-            self$.addOption(private$..ModelRelation3)
-            self$.addOption(private$..ModelRelation4)
-            self$.addOption(private$..ModelRelation5)
+            self$.addOption(private$..predictFolds)
+            self$.addOption(private$..endogenousClass)
+            self$.addOption(private$..exogenousClass)
+            self$.addOption(private$..endogenousTerms)
+            self$.addOption(private$..exactFit)
+            self$.addOption(private$..showCompositeLoadings)
+            self$.addOption(private$..disattenuate)
         }),
     active = list(
         .caller = function() private$...caller$value,
@@ -147,11 +171,13 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
         useBootstrap = function() private$..useBootstrap$value,
         bootR = function() private$..bootR$value,
         LinearBench = function() private$..LinearBench$value,
-        ModelRelation = function() private$..ModelRelation$value,
-        ModelRelation2 = function() private$..ModelRelation2$value,
-        ModelRelation3 = function() private$..ModelRelation3$value,
-        ModelRelation4 = function() private$..ModelRelation4$value,
-        ModelRelation5 = function() private$..ModelRelation5$value),
+        predictFolds = function() private$..predictFolds$value,
+        endogenousClass = function() private$..endogenousClass$value,
+        exogenousClass = function() private$..exogenousClass$value,
+        endogenousTerms = function() private$..endogenousTerms$value,
+        exactFit = function() private$..exactFit$value,
+        showCompositeLoadings = function() private$..showCompositeLoadings$value,
+        disattenuate = function() private$..disattenuate$value),
     private = list(
         ...caller = NA,
         ..code = NA,
@@ -162,11 +188,13 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
         ..useBootstrap = NA,
         ..bootR = NA,
         ..LinearBench = NA,
-        ..ModelRelation = NA,
-        ..ModelRelation2 = NA,
-        ..ModelRelation3 = NA,
-        ..ModelRelation4 = NA,
-        ..ModelRelation5 = NA)
+        ..predictFolds = NA,
+        ..endogenousClass = NA,
+        ..exogenousClass = NA,
+        ..endogenousTerms = NA,
+        ..exactFit = NA,
+        ..showCompositeLoadings = NA,
+        ..disattenuate = NA)
 )
 
 CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
@@ -174,6 +202,18 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
     inherit = jmvcore::Group,
     active = list(
         constructsTable = function() private$.items[["constructsTable"]],
+        infoTable = function() private$.items[["infoTable"]],
+        fitTable = function() private$.items[["fitTable"]],
+        exactFitTable = function() private$.items[["exactFitTable"]],
+        outerCompositesTable = function() private$.items[["outerCompositesTable"]],
+        outerCommonFactorsTable = function() private$.items[["outerCommonFactorsTable"]],
+        reliabilityTable = function() private$.items[["reliabilityTable"]],
+        htmtTable = function() private$.items[["htmtTable"]],
+        vifModeBTable = function() private$.items[["vifModeBTable"]],
+        vcvTable = function() private$.items[["vcvTable"]],
+        structuralTable = function() private$.items[["structuralTable"]],
+        mediationTable = function() private$.items[["mediationTable"]],
+        predictTable = function() private$.items[["predictTable"]],
         csemOutput = function() private$.items[["csemOutput"]]),
     private = list(),
     public=list(
@@ -199,10 +239,584 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                         `name`="indicators", 
                         `title`="Indicators", 
                         `type`="text"))))
+            self$add(jmvcore::Table$new(
+                options=options,
+                name="infoTable",
+                title="Model Information",
+                clearWith=list(
+                    "data",
+                    "latent",
+                    "composite",
+                    "multg",
+                    "alt",
+                    "useBootstrap",
+                    "bootR",
+                    "LinearBench",
+                    "endogenousClass",
+                    "exogenousClass",
+                    "endogenousTerms",
+                    "disattenuate"),
+                columns=list(
+                    list(
+                        `name`="group", 
+                        `title`="Group", 
+                        `type`="text", 
+                        `visible`="(multg)"),
+                    list(
+                        `name`="property", 
+                        `title`="Property", 
+                        `type`="text"),
+                    list(
+                        `name`="value", 
+                        `title`="Value", 
+                        `type`="text"))))
+            self$add(jmvcore::Table$new(
+                options=options,
+                name="fitTable",
+                title="Model Fit Indices",
+                clearWith=list(
+                    "data",
+                    "latent",
+                    "composite",
+                    "multg",
+                    "alt",
+                    "useBootstrap",
+                    "bootR",
+                    "LinearBench",
+                    "endogenousClass",
+                    "exogenousClass",
+                    "endogenousTerms",
+                    "disattenuate"),
+                columns=list(
+                    list(
+                        `name`="group", 
+                        `title`="Group", 
+                        `type`="text", 
+                        `visible`="(multg)"),
+                    list(
+                        `name`="metric", 
+                        `title`="Metric", 
+                        `type`="text"),
+                    list(
+                        `name`="value", 
+                        `title`="Value", 
+                        `type`="number"))))
+            self$add(jmvcore::Table$new(
+                options=options,
+                name="exactFitTable",
+                title="Exact Fit Test",
+                visible=FALSE,
+                clearWith=list(
+                    "data",
+                    "latent",
+                    "composite",
+                    "multg",
+                    "alt",
+                    "useBootstrap",
+                    "bootR",
+                    "LinearBench",
+                    "exactFit",
+                    "disattenuate"),
+                columns=list(
+                    list(
+                        `name`="group", 
+                        `title`="Group", 
+                        `type`="text", 
+                        `visible`="(multg)"),
+                    list(
+                        `name`="measure", 
+                        `title`="Distance measure", 
+                        `type`="text"),
+                    list(
+                        `name`="stat", 
+                        `title`="Test statistic", 
+                        `type`="number"),
+                    list(
+                        `name`="crit", 
+                        `title`="Critical value (95%)", 
+                        `type`="number"),
+                    list(
+                        `name`="decision", 
+                        `title`="Decision", 
+                        `type`="text"))))
+            self$add(jmvcore::Table$new(
+                options=options,
+                name="outerCompositesTable",
+                title="Outer Model of Composites",
+                clearWith=list(
+                    "data",
+                    "latent",
+                    "composite",
+                    "multg",
+                    "alt",
+                    "useBootstrap",
+                    "bootR",
+                    "LinearBench",
+                    "endogenousClass",
+                    "exogenousClass",
+                    "endogenousTerms",
+                    "disattenuate",
+                    "showCompositeLoadings"),
+                columns=list(
+                    list(
+                        `name`="group", 
+                        `title`="Group", 
+                        `type`="text", 
+                        `visible`="(multg)"),
+                    list(
+                        `name`="construct", 
+                        `title`="Construct", 
+                        `type`="text"),
+                    list(
+                        `name`="indicator", 
+                        `title`="Indicator", 
+                        `type`="text"),
+                    list(
+                        `name`="relation", 
+                        `title`="Relation", 
+                        `type`="text", 
+                        `visible`="(showCompositeLoadings)"),
+                    list(
+                        `name`="estimate", 
+                        `title`="Std estimate", 
+                        `type`="number"),
+                    list(
+                        `name`="se", 
+                        `title`="SE", 
+                        `type`="number", 
+                        `visible`="(useBootstrap)"),
+                    list(
+                        `name`="cil", 
+                        `title`="Lower", 
+                        `type`="number", 
+                        `superTitle`="95% Confidence Interval", 
+                        `visible`="(useBootstrap)"),
+                    list(
+                        `name`="ciu", 
+                        `title`="Upper", 
+                        `type`="number", 
+                        `superTitle`="95% Confidence Interval", 
+                        `visible`="(useBootstrap)"),
+                    list(
+                        `name`="p", 
+                        `title`="p-value", 
+                        `type`="number", 
+                        `format`="zto,pvalue", 
+                        `visible`="(useBootstrap)"))))
+            self$add(jmvcore::Table$new(
+                options=options,
+                name="outerCommonFactorsTable",
+                title="Outer Model of Common Factors",
+                clearWith=list(
+                    "data",
+                    "latent",
+                    "composite",
+                    "multg",
+                    "alt",
+                    "useBootstrap",
+                    "bootR",
+                    "LinearBench",
+                    "endogenousClass",
+                    "exogenousClass",
+                    "endogenousTerms",
+                    "disattenuate"),
+                columns=list(
+                    list(
+                        `name`="group", 
+                        `title`="Group", 
+                        `type`="text", 
+                        `visible`="(multg)"),
+                    list(
+                        `name`="construct", 
+                        `title`="Construct", 
+                        `type`="text"),
+                    list(
+                        `name`="indicator", 
+                        `title`="Indicator", 
+                        `type`="text"),
+                    list(
+                        `name`="estimate", 
+                        `title`="Std estimate", 
+                        `type`="number"),
+                    list(
+                        `name`="se", 
+                        `title`="SE", 
+                        `type`="number", 
+                        `visible`="(useBootstrap)"),
+                    list(
+                        `name`="cil", 
+                        `title`="Lower", 
+                        `type`="number", 
+                        `superTitle`="95% Confidence Interval", 
+                        `visible`="(useBootstrap)"),
+                    list(
+                        `name`="ciu", 
+                        `title`="Upper", 
+                        `type`="number", 
+                        `superTitle`="95% Confidence Interval", 
+                        `visible`="(useBootstrap)"),
+                    list(
+                        `name`="p", 
+                        `title`="p-value", 
+                        `type`="number", 
+                        `format`="zto,pvalue", 
+                        `visible`="(useBootstrap)"))))
+            self$add(jmvcore::Table$new(
+                options=options,
+                name="reliabilityTable",
+                title="Construct Reliability (Common Factors)",
+                clearWith=list(
+                    "data",
+                    "latent",
+                    "composite",
+                    "multg",
+                    "alt",
+                    "useBootstrap",
+                    "bootR",
+                    "LinearBench",
+                    "endogenousClass",
+                    "exogenousClass",
+                    "endogenousTerms",
+                    "disattenuate"),
+                columns=list(
+                    list(
+                        `name`="group", 
+                        `title`="Group", 
+                        `type`="text", 
+                        `visible`="(multg)"),
+                    list(
+                        `name`="construct", 
+                        `title`="Construct", 
+                        `type`="text"),
+                    list(
+                        `name`="alpha", 
+                        `title`="Cronbach's alpha (\u03B1)", 
+                        `type`="number"),
+                    list(
+                        `name`="rhoC", 
+                        `title`="J\u00F6reskog's rho (\u03C9)", 
+                        `superTitle`="Composite Reliability", 
+                        `type`="number"),
+                    list(
+                        `name`="rhoA", 
+                        `title`="Dijkstra-Henseler's rho (\u03C1A)", 
+                        `superTitle`="Composite Reliability", 
+                        `type`="number"),
+                    list(
+                        `name`="ave", 
+                        `title`="AVE", 
+                        `type`="number"))))
+            self$add(jmvcore::Table$new(
+                options=options,
+                name="htmtTable",
+                title="Discriminant Validity (HTMT & HTMT2)",
+                clearWith=list(
+                    "data",
+                    "latent",
+                    "composite",
+                    "multg",
+                    "alt",
+                    "useBootstrap",
+                    "bootR",
+                    "LinearBench",
+                    "endogenousClass",
+                    "exogenousClass",
+                    "endogenousTerms",
+                    "disattenuate"),
+                columns=list(
+                    list(
+                        `name`="group", 
+                        `title`="Group", 
+                        `type`="text", 
+                        `visible`="(multg)"),
+                    list(
+                        `name`="c1", 
+                        `title`="Construct 1", 
+                        `type`="text"),
+                    list(
+                        `name`="c2", 
+                        `title`="Construct 2", 
+                        `type`="text"),
+                    list(
+                        `name`="htmt", 
+                        `title`="HTMT", 
+                        `type`="number"),
+                    list(
+                        `name`="htmt2", 
+                        `title`="HTMT2", 
+                        `type`="number"))))
+            self$add(jmvcore::Table$new(
+                options=options,
+                name="vifModeBTable",
+                title="Variance Inflation Factors (VIFs) for Mode B Weights",
+                clearWith=list(
+                    "data",
+                    "latent",
+                    "composite",
+                    "multg",
+                    "alt",
+                    "useBootstrap",
+                    "bootR",
+                    "LinearBench",
+                    "endogenousClass",
+                    "exogenousClass",
+                    "endogenousTerms",
+                    "disattenuate"),
+                columns=list(
+                    list(
+                        `name`="group", 
+                        `title`="Group", 
+                        `type`="text", 
+                        `visible`="(multg)"),
+                    list(
+                        `name`="construct", 
+                        `title`="Construct", 
+                        `type`="text"),
+                    list(
+                        `name`="indicator", 
+                        `title`="Indicator", 
+                        `type`="text"),
+                    list(
+                        `name`="vif", 
+                        `title`="VIF Value", 
+                        `type`="number"))))
+            self$add(jmvcore::Table$new(
+                options=options,
+                name="vcvTable",
+                title="Construct Correlations",
+                clearWith=list(
+                    "data",
+                    "latent",
+                    "composite",
+                    "multg",
+                    "alt",
+                    "useBootstrap",
+                    "bootR",
+                    "LinearBench",
+                    "endogenousClass",
+                    "exogenousClass",
+                    "endogenousTerms",
+                    "disattenuate"),
+                columns=list(
+                    list(
+                        `name`="group", 
+                        `title`="Group", 
+                        `type`="text", 
+                        `visible`="(multg)"),
+                    list(
+                        `name`="c1", 
+                        `title`="Construct 1", 
+                        `type`="text"),
+                    list(
+                        `name`="c2", 
+                        `title`="Construct 2", 
+                        `type`="text"),
+                    list(
+                        `name`="estimate", 
+                        `title`="Correlation", 
+                        `type`="number"),
+                    list(
+                        `name`="se", 
+                        `title`="SE", 
+                        `type`="number"),
+                    list(
+                        `name`="cil", 
+                        `title`="Lower", 
+                        `type`="number", 
+                        `superTitle`="95% Confidence Interval"),
+                    list(
+                        `name`="ciu", 
+                        `title`="Upper", 
+                        `type`="number", 
+                        `superTitle`="95% Confidence Interval"),
+                    list(
+                        `name`="p", 
+                        `title`="p-value", 
+                        `type`="number", 
+                        `format`="zto,pvalue"))))
+            self$add(jmvcore::Table$new(
+                options=options,
+                name="structuralTable",
+                title="Inner Model (Structural Relationships)",
+                clearWith=list(
+                    "data",
+                    "latent",
+                    "composite",
+                    "multg",
+                    "alt",
+                    "useBootstrap",
+                    "bootR",
+                    "LinearBench",
+                    "endogenousClass",
+                    "exogenousClass",
+                    "endogenousTerms",
+                    "disattenuate"),
+                columns=list(
+                    list(
+                        `name`="group", 
+                        `title`="Group", 
+                        `type`="text", 
+                        `visible`="(multg)"),
+                    list(
+                        `name`="rhs", 
+                        `title`="Predictor", 
+                        `type`="text"),
+                    list(
+                        `name`="lhs", 
+                        `title`="Outcome", 
+                        `type`="text"),
+                    list(
+                        `name`="estimate", 
+                        `title`="<i>&beta;</i>", 
+                        `type`="number"),
+                    list(
+                        `name`="se", 
+                        `title`="SE", 
+                        `type`="number", 
+                        `visible`="(useBootstrap)"),
+                    list(
+                        `name`="cil", 
+                        `title`="Lower", 
+                        `type`="number", 
+                        `superTitle`="95% Confidence Interval", 
+                        `visible`="(useBootstrap)"),
+                    list(
+                        `name`="ciu", 
+                        `title`="Upper", 
+                        `type`="number", 
+                        `superTitle`="95% Confidence Interval", 
+                        `visible`="(useBootstrap)"),
+                    list(
+                        `name`="p", 
+                        `title`="p-value", 
+                        `type`="number", 
+                        `format`="zto,pvalue", 
+                        `visible`="(useBootstrap)"),
+                    list(
+                        `name`="r2", 
+                        `title`="R\u00B2", 
+                        `type`="number"),
+                    list(
+                        `name`="r2adj", 
+                        `title`="Adj. R\u00B2", 
+                        `type`="number"))))
+            self$add(jmvcore::Table$new(
+                options=options,
+                name="mediationTable",
+                title="Indirect and Total Effects",
+                visible=FALSE,
+                clearWith=list(
+                    "data",
+                    "latent",
+                    "composite",
+                    "multg",
+                    "alt",
+                    "useBootstrap",
+                    "bootR",
+                    "LinearBench",
+                    "endogenousClass",
+                    "exogenousClass",
+                    "endogenousTerms",
+                    "disattenuate"),
+                columns=list(
+                    list(
+                        `name`="group", 
+                        `title`="Group", 
+                        `type`="text", 
+                        `visible`="(multg)"),
+                    list(
+                        `name`="type", 
+                        `title`="Effect Type", 
+                        `type`="text"),
+                    list(
+                        `name`="rhs", 
+                        `title`="Predictor", 
+                        `type`="text"),
+                    list(
+                        `name`="lhs", 
+                        `title`="Outcome", 
+                        `type`="text"),
+                    list(
+                        `name`="estimate", 
+                        `title`="<i>&beta;</i>", 
+                        `type`="number"),
+                    list(
+                        `name`="se", 
+                        `title`="SE", 
+                        `type`="number", 
+                        `visible`="(useBootstrap)"),
+                    list(
+                        `name`="cil", 
+                        `title`="Lower", 
+                        `type`="number", 
+                        `superTitle`="95% Confidence Interval", 
+                        `visible`="(useBootstrap)"),
+                    list(
+                        `name`="ciu", 
+                        `title`="Upper", 
+                        `type`="number", 
+                        `superTitle`="95% Confidence Interval", 
+                        `visible`="(useBootstrap)"),
+                    list(
+                        `name`="p", 
+                        `title`="p-value", 
+                        `type`="number", 
+                        `format`="zto,pvalue", 
+                        `visible`="(useBootstrap)"))))
+            self$add(jmvcore::Table$new(
+                options=options,
+                name="predictTable",
+                title="Model's Out-of-Sample Predictive Power",
+                visible="(LinearBench)",
+                clearWith=list(
+                    "data",
+                    "latent",
+                    "composite",
+                    "multg",
+                    "alt",
+                    "useBootstrap",
+                    "bootR",
+                    "LinearBench",
+                    "endogenousClass",
+                    "exogenousClass",
+                    "endogenousTerms",
+                    "disattenuate",
+                    "predictFolds"),
+                columns=list(
+                    list(
+                        `name`="group", 
+                        `title`="Group", 
+                        `type`="text", 
+                        `visible`="(multg)"),
+                    list(
+                        `name`="indicator", 
+                        `title`="Indicator", 
+                        `type`="text"),
+                    list(
+                        `name`="maeTarget", 
+                        `title`="MAE PLS", 
+                        `type`="number"),
+                    list(
+                        `name`="maeBench", 
+                        `title`="MAE LM", 
+                        `type`="number"),
+                    list(
+                        `name`="rmseTarget", 
+                        `title`="RMSE PLS", 
+                        `type`="number"),
+                    list(
+                        `name`="rmseBench", 
+                        `title`="RMSE LM", 
+                        `type`="number"),
+                    list(
+                        `name`="q2", 
+                        `title`="Q\u00B2 predict", 
+                        `type`="number"))))
             self$add(jmvcore::Preformatted$new(
                 options=options,
                 name="csemOutput",
-                title="Results"))}))
+                title="Multi-Group Analysis & Advanced Outputs",
+                visible="(multg)"))}))
 
 CompositeSEMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "CompositeSEMBase",
@@ -212,7 +826,7 @@ CompositeSEMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             super$initialize(
                 package = "CompositeSEM",
                 name = "CompositeSEM",
-                version = c(1,0,0),
+                version = c(1,3,0),
                 options = options,
                 results = CompositeSEMResults$new(options=options),
                 data = data,
@@ -235,21 +849,39 @@ CompositeSEMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   the latent endogenous variable(s) and the \code{vars} that belong to that
 #'   latent.
 #' @param composite A list containing named lists that define the \code{label}
-#'   of the latent exogenous variables and the \code{vars} that belong to that
-#'   latent.
+#'   of the composite variables and the \code{vars} that belong to that
+#'   composite.
 #' @param multg .
 #' @param alt .
 #' @param useBootstrap .
 #' @param bootR .
 #' @param LinearBench .
-#' @param ModelRelation .
-#' @param ModelRelation2 .
-#' @param ModelRelation3 .
-#' @param ModelRelation4 .
-#' @param ModelRelation5 .
+#' @param predictFolds .
+#' @param endogenousClass Constructs classified as endogenous outcomes for
+#'   directional structural modeling.
+#' @param exogenousClass Constructs classified as exogenous predictors for
+#'   directional structural modeling.
+#' @param endogenousTerms A list of structural predictor term sets, one per
+#'   construct. Each entry corresponds to a latent or composite construct in
+#'   order.
+#' @param exactFit .
+#' @param showCompositeLoadings .
+#' @param disattenuate .
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$constructsTable} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$infoTable} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$fitTable} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$exactFitTable} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$outerCompositesTable} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$outerCommonFactorsTable} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$reliabilityTable} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$htmtTable} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$vifModeBTable} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$vcvTable} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$structuralTable} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$mediationTable} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$predictTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$csemOutput} \tab \tab \tab \tab \tab a preformatted \cr
 #' }
 #'
@@ -273,11 +905,14 @@ CompositeSEM <- function(
     useBootstrap = FALSE,
     bootR = 500,
     LinearBench = FALSE,
-    ModelRelation,
-    ModelRelation2,
-    ModelRelation3,
-    ModelRelation4,
-    ModelRelation5) {
+    predictFolds = 10,
+    endogenousClass = list(),
+    exogenousClass = list(),
+    endogenousTerms = list(
+                list()),
+    exactFit = FALSE,
+    showCompositeLoadings = FALSE,
+    disattenuate = FALSE) {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
         stop("CompositeSEM requires jmvcore to be installed (restart may be required)")
@@ -288,6 +923,8 @@ CompositeSEM <- function(
             parent.frame(),
             `if`( ! missing(multg), multg, NULL))
 
+    if (inherits(endogenousClass, "formula")) endogenousClass <- jmvcore::decomposeFormula(endogenousClass)
+    if (inherits(exogenousClass, "formula")) exogenousClass <- jmvcore::decomposeFormula(exogenousClass)
 
     options <- CompositeSEMOptions$new(
         .caller = .caller,
@@ -299,11 +936,13 @@ CompositeSEM <- function(
         useBootstrap = useBootstrap,
         bootR = bootR,
         LinearBench = LinearBench,
-        ModelRelation = ModelRelation,
-        ModelRelation2 = ModelRelation2,
-        ModelRelation3 = ModelRelation3,
-        ModelRelation4 = ModelRelation4,
-        ModelRelation5 = ModelRelation5)
+        predictFolds = predictFolds,
+        endogenousClass = endogenousClass,
+        exogenousClass = exogenousClass,
+        endogenousTerms = endogenousTerms,
+        exactFit = exactFit,
+        showCompositeLoadings = showCompositeLoadings,
+        disattenuate = disattenuate)
 
     analysis <- CompositeSEMClass$new(
         options = options,
