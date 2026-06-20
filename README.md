@@ -42,3 +42,45 @@ Structural (inner) Relations: Define paths using standard syntax:
 Y ~ X for direct effects.
 
 Predictive Assessment: Toggle the Linear Model Benchmark to assess the out-of-sample predictive power of your composite model.
+
+
+**Composite-SEM 1.3 Update**
+**What is included in 1.3**
+
+- Reflective latent constructs and formative composite constructs.
+- Drag-and-drop structural roles for endogenous and exogenous constructs.
+- Directional path blocks for specifying predictors of each endogenous construct.
+- Automatic correlated model mode when no directional paths are defined.
+- Estimation with PLS, GSCA, or MAXVAR.
+- Optional bootstrapping with confidence intervals, standard errors, and p-values.
+- Optional exact fit testing when bootstrapping is enabled.
+- Optional composite outer loadings display.
+- Optional disattenuation control for cSEM estimation.
+- Optional out-of-sample prediction benchmark against a linear model.
+- Multi-group analysis support through the grouping variable option.
+
+**Main outputs**
+
+- Model structure summary.
+- Model information.
+- Model fit indices.
+- Exact fit test.
+- Outer model of composites.
+- Outer model of common factors.
+- Construct reliability for common factors.
+- Discriminant validity with HTMT and HTMT2.
+- VIF values for Mode B weights.
+- Construct correlations.
+- Inner structural relationships with R-squared values.
+- Indirect and total effects when mediation paths exist.
+- Prediction benchmark metrics when enabled.
+
+**Interface overview**
+
+1. Define latent and composite constructs in the measurement model sections.
+2. Optionally assign a multigroup variable.
+3. Choose the estimation method and bootstrap settings.
+4. Use Structural Roles to classify constructs as endogenous or exogenous.
+5. Use Directional Paths to drag predictors into each endogenous construct block.
+
+If the structural sections are left empty, CompositeSEM estimates a correlated model automatically.
