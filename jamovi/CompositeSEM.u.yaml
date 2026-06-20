@@ -1,9 +1,9 @@
 title: Composite-SEM
 name: CompositeSEM
-jus: '3.0'
+jus: '2.0'
 stage: 0
-compilerMode: tame
-
+events:
+  update: './events::update'
 children:
   - type: VariableSupplier
     persistentItems: true
@@ -14,8 +14,6 @@ children:
     permitted:
       - numeric
     children:
-      
-      # --- Endogenous Section ---
       - type: TargetLayoutBox
         label: Latent
         children:
@@ -23,12 +21,17 @@ children:
             name: latent
             height: large
             addButton: Add Latent
+            events:
+              listItemAdded: './events::onChange_items_changed'
+              listItemRemoved: './events::onChange_items_changed'
             template:
               type: LayoutBox
               margin: normal
               children:
                 - type: TextBox
                   name: label
+                  events:
+                    change: './events::onChange_constructName'
                   valueKey:
                     - label
                   borderless: true
@@ -36,13 +39,14 @@ children:
                   margin: normal
                 - type: VariablesListBox
                   name: vars
+                  events:
+                    listItemAdded: './events::onChange_items_changed'
+                    listItemRemoved: './events::onChange_items_changed'
                   valueKey:
                     - vars
                   isTarget: true
                   height: auto
                   ghostText: drag variables here
-
-      # --- Exogenous Section ---
       - type: TargetLayoutBox
         label: Composite
         children:
@@ -50,12 +54,17 @@ children:
             name: composite
             height: large
             addButton: Add Composite
+            events:
+              listItemAdded: './events::onChange_items_changed'
+              listItemRemoved: './events::onChange_items_changed'
             template:
               type: LayoutBox
               margin: normal
               children:
                 - type: TextBox
                   name: label
+                  events:
+                    change: './events::onChange_constructName'
                   valueKey:
                     - label
                   borderless: true
@@ -63,13 +72,14 @@ children:
                   margin: normal
                 - type: VariablesListBox
                   name: vars
+                  events:
+                    listItemAdded: './events::onChange_items_changed'
+                    listItemRemoved: './events::onChange_items_changed'
                   valueKey:
                     - vars
                   isTarget: true
                   height: auto
                   ghostText: drag variables here
-
-      # --- Multigroup ---
       - type: TargetLayoutBox
         label: Multigroup Analysis
         children:
@@ -77,21 +87,17 @@ children:
             name: multg
             maxItemCount: 1
             isTarget: true
-
-  # --- Estimation Options ---
-  - type: CollapseBox
-    label: Model Estimation
-    collapsed: true
-    stretchFactor: 1
+  - type: LayoutBox
+    margin: large
     children:
-      - type: LayoutBox
-        margin: large
-        style: inline
-        children:
-          - type: ComboBox
-            name: alt
-
-  # --- Bootstrapping ---
+      - type: Label
+        label: 'Note: Defining constructs estimates a correlated model automatically.'
+        stretchFactor: 1
+        margin: small
+      - type: Label
+        label: "To specify structural relationships, use 'Structural Roles' below."
+        stretchFactor: 1
+        margin: small
   - type: CollapseBox
     label: Bootstrapping
     collapsed: true
@@ -102,31 +108,43 @@ children:
         children:
           - type: CheckBox
             name: useBootstrap
-          - type: Label
-            label: "Note: Larger numbers require larger estimation time"
-            stretchFactor: 1  
-            margin: small
           - type: TextBox
             name: bootR
             format: number
             enable: (useBootstrap)
-
-  # --- Benchmark ---
+          - type: Label
+            label: 'Note: Bootstrapping is needed to generate important indices (such as p-value and SE)'
+            stretchFactor: 1
+            margin: small
   - type: CollapseBox
-    label: Benchmark
+    label: Model Estimation
     collapsed: true
     stretchFactor: 1
     children:
       - type: LayoutBox
         margin: large
-        style: inline
+        children:
+          - type: ComboBox
+            name: alt
+            events:
+              change: './events::onChange_alt'
+          - type: CheckBox
+            name: disattenuate
+  - type: CollapseBox
+    label: Options
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: LayoutBox
+        margin: large
         children:
           - type: CheckBox
-            name: LinearBench
+            name: exactFit
+          - type: CheckBox
+            name: showCompositeLoadings
 
-  # --- Structural Relations (Text) ---
   - type: CollapseBox
-    label: Model Relationships (Text)
+    label: Structural Roles
     collapsed: true
     stretchFactor: 1
     children:
@@ -135,29 +153,104 @@ children:
         stretchFactor: 1
         children:
           - type: Label
-            label: "Note: Y ~ X (Example of Effect) , (Correlations are estimated automatically)"
-            stretchFactor: 1    
+            name: debugLabel
+            label: "If you leave the structural section empty, correlation will be estimated."
+            stretchFactor: 1
             margin: small
-          - type: TextBox
-            name: ModelRelation
-            format: string
-            stretchFactor: 1    
-          - type: TextBox
-            name: ModelRelation2
-            format: string
+          - type: Supplier
+            label: Defined Constructs
+            name: roleSupplier
+            format: variable
+            persistentItems: true
             stretchFactor: 1
-          - type: TextBox
-            name: ModelRelation3
-            format: string
+            events:
+              update: ./events::onUpdate_roleSupplier
+              change: ./events::onChange_roleSupplier
+            children:
+              - type: TargetLayoutBox
+                label: Endogenous Constructs
+                children:
+                  - type: ListBox
+                    name: endogenousClass
+                    isTarget: true
+                    valueFilter: unique
+                    fullRowSelect: true
+                    height: large
+                    ghostText: drag constructs here
+                    events:
+                      change: ./events::onChange_roleAssignments
+                    template:
+                      type: TermLabel
+              - type: TargetLayoutBox
+                label: Exogenous Constructs
+                children:
+                  - type: ListBox
+                    name: exogenousClass
+                    isTarget: true
+                    valueFilter: unique
+                    fullRowSelect: true
+                    height: large
+                    ghostText: drag constructs here
+                    events:
+                      change: ./events::onChange_roleAssignments
+                    template:
+                      type: TermLabel
+  - type: CollapseBox
+    label: Directional Paths
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: LayoutBox
+        margin: large
+        stretchFactor: 1
+        children:
+          - type: Label
+            label: "Specify directional relationships."
             stretchFactor: 1
-          - type: TextBox
-            name: ModelRelation4
-            format: string
+            margin: small
+          - type: Supplier
+            label: Defined Constructs
+            name: pathSupplier
+            format: variable
+            persistentItems: true
             stretchFactor: 1
+            events:
+              update: ./events::onUpdate_pathSupplier
+              change: ./events::onChange_pathSupplier
+            children:
+              - type: TargetLayoutBox
+                label: Endogenous Variables Models
+                children:
+                  - type: ListBox
+                    name: endogenousTerms
+                    height: large
+                    selectable: true
+                    templateName: linreg-block-template
+                    template:
+                      type: LayoutBox
+                      margin: normal
+                      targetArea: true
+                      children:
+                        - type: Label
+                          name: blockName
+                          label: empty
+                          stretchFactor: 1
+                          margin: normal
+                        - type: ListBox
+                          name: blockList
+                          isTarget: true
+                          valueFilter: unique
+                          height: auto
+                          ghostText: drag predictors here
+                          events:
+                            change: ./events::onChange_endogenousTerms
+                          template:
+                            type: TermLabel
+          - type: CheckBox
+            name: LinearBench
           - type: TextBox
-            name: ModelRelation5
-            format: string
-            stretchFactor: 1
+            name: predictFolds
+            format: number
+            enable: (LinearBench)
 
-
-  
+compilerMode: tame
