@@ -4,7 +4,7 @@ Composite-SEM is a comprehensive module for jamovi designed to estimate, analyze
 
 **Core Features**
 
-Advanced estimation techniques: Supports Partial Least Squares (PLS), Correction PLS (PLSc) for latent variables, Generalized Structured Component Analysis (GSCA), and Maxvar.
+Advanced estimation techniques: Supports Partial Least Squares (PLS), Corrected PLS (PLSc) for latent variables, Generalized Structured Component Analysis (GSCA), and Maxvar.
 
 Flexible measurement models: Easily define reflective (latent) and formative (composite) constructs.
 
