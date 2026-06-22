@@ -223,7 +223,7 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                      # Check validation rules
                                      estimationModel <- self$options$alt
                                      if (estimationModel == "MAXVAR" && !isTRUE(self$options$disattenuate) && hasComposites) {
-                                       summaryTable$setNote("maxvar_error", "MAXVAR only works with disattenuation if all constructs are common factors (latent variables). Please enable 'Turn off disattenuation (possible bias)' or choose another estimation method.")
+                                       summaryTable$setNote("maxvar_error", "MAXVAR only works with disattenuation if all constructs are common factors (latent variables). Please enable 'No disattenuation' or choose another estimation method.")
                                        csemOutput$setVisible(FALSE)
                                        return()
                                      }
@@ -260,34 +260,6 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                      bootstrapSamples <- self$options$bootR
                                      runLinearBench   <- self$options$LinearBench
                                      
-                                     # --- DATA CLEANING (MISSING DATA) BLOCK COMMENTED OUT ---
-                                     # Determine missingness treatment automatically based on active indicators
-                                     # active_indicators <- c()
-                                     # for (item in self$options$latent) {
-                                     #     if (length(item$vars) > 0 && nzchar(item$label) && is_used(item$label)) {
-                                     #         active_indicators <- c(active_indicators, item$vars)
-                                     #     }
-                                     # }
-                                     # for (item in self$options$composite) {
-                                     #     if (length(item$vars) > 0 && nzchar(item$label) && is_used(item$label)) {
-                                     #         active_indicators <- c(active_indicators, item$vars)
-                                     #     }
-                                     # }
-                                     # if (!is.null(multGroupVar) && multGroupVar != "") {
-                                     #     active_indicators <- c(active_indicators, multGroupVar)
-                                     # }
-                                     # active_indicators <- unique(active_indicators)
-                                     
-                                     # has_missingness <- FALSE
-                                     # if (length(active_indicators) > 0) {
-                                     #     existing_cols <- intersect(active_indicators, colnames(self$data))
-                                     #     if (length(existing_cols) > 0 && anyNA(self$data[, existing_cols, drop = FALSE])) {
-                                     #         has_missingness <- TRUE
-                                     #     }
-                                     # }
-                                     # missingMode <- "listwise"
-                                     # --------------------------------------------------------
-                                     
                                      # Initialize these here so other blocks can access them
                                      groups   <- character(0)
                                      summs    <- list()
@@ -300,9 +272,7 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                      # --- Run cSEM ---
                                      tryCatch({
                                        
-                                       # will turn it on later when csem update the missingMode
-                                       # csem_args <- list(.data=self$data, .model=model, .missing=missingMode)
-                                       csem_args <- list(.data=self$data, .model=model)
+                                      csem_args <- list(.data=self$data, .model=model)
                                        
                                        if (!is.null(multGroupVar) && multGroupVar != "")
                                          csem_args$.id <- multGroupVar
@@ -407,18 +377,6 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                          value = if (!isTRUE(self$options$disattenuate)) "Yes" else "No"
                                        ))
                                        
-                                       # --- MISSING DATA INFO TABLE COMMENTED OUT ---
-                                       # Add missing data handling info
-                                       # infoTable$addRow(rowKey="missing_mode", values=list(
-                                       #     group = "",
-                                       #     property = "Missing data treatment",
-                                       #     value = if (has_missingness)
-                                       #                 "Listwise deletion (automatically activated)"
-                                       #             else
-                                       #                 "None (no missing data)"
-                                       # ))
-                                       # ---------------------------------------------
-                                       
                                        # Get construct types
                                        c_types <- if (is_multi) out[[1]]$Information$Arguments$.model$construct_type else out$Information$Arguments$.model$construct_type
                                        all_constructs <- names(c_types)
@@ -488,7 +446,7 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                              }
                                            }
                                          } else {
-                                           exactFitTable$setNote("bootNote", "The exact fit test requires bootstrapping. Please enable Perform Bootstrapping.")
+                                           exactFitTable$setNote("bootNote", "The exact fit test requires bootstrapping. Please enable Bootstrapping.")
                                          }
                                        } else {
                                          exactFitTable$setVisible(FALSE)
@@ -710,6 +668,7 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                        vcvTable$getColumn("cil")$setVisible(is_auto_mode && useBootstrap)
                                        vcvTable$getColumn("ciu")$setVisible(is_auto_mode && useBootstrap)
                                        vcvTable$getColumn("p")$setVisible(is_auto_mode && useBootstrap)
+                                       vcvTable$getColumn("t")$setVisible(is_auto_mode && useBootstrap)
                                        
                                        
                                        
