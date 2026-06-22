@@ -103,18 +103,6 @@ const events = {
         }
     },
 
-    onChange_showPlot: function(ui) {
-        try {
-            if (ui.showPlot.value() === true) {
-                ui.showEstimates.setValue(true);
-            }
-        } catch (err) {
-            if (ui.debugLabel) {
-                ui.debugLabel.setPropertyValue('label', 'Error in onChange_showPlot: ' + err.message + '\nStack: ' + err.stack);
-            }
-        }
-    },
-
     onChange_alt: function(ui) {
     }
 };
@@ -319,8 +307,4 @@ function normalize(value) {
     return Array.isArray(value) ? value : [ value ];
 }
 
-function updateModes(ui, context) {
-}
-
 module.exports = events;
-
