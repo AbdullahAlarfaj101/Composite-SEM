@@ -13,20 +13,6 @@ options:
     R: >
       TO ADD
 
-- name: .caller
-  type: String
-  title: submodule
-  default: "gui"
-  hidden: true
-
-- name: code
-  default: |
-  type: String
-  hidden: true
-  description:
-    R: >
-      The lavaan syntax
-
 ########################################################################################
 - name: latent
   type: Array
@@ -83,7 +69,7 @@ options:
 
 ########################################################################################
 - name: alt
-  title: Estimation Method
+  title: Estimation method
   type: List
   options:
   - title: PLS
@@ -95,7 +81,7 @@ options:
   default: PLS
 ########################################################################################
 - name: useBootstrap
-  title: Perform bootstrapping
+  title: Bootstrapping
   type: Bool
   default: false
 ########################################################################################
@@ -107,7 +93,7 @@ options:
   default: 500
 ########################################################################################
 - name: LinearBench
-  title: Model's out-of-sample predictive power
+  title: Out-of-sample predictive power
   type: Bool
   default: false
 
@@ -156,25 +142,22 @@ options:
 ########################################################################################
 
 - name: exactFit
-  title: Estimate exact fit test (bootstrap needs to be activated first)
+  title: Exact fit test
   type: Bool
   default: false
 
 
 
 - name: showCompositeLoadings
-  title: Show outer loadings of composites (absolute contribution)
+  title: Composite outer loadings
   type: Bool
   default: false
 
 
 
 - name: disattenuate
-  title: Turn off disattenuation (possible bias)
+  title: No disattenuation
   type: Bool
   default: false
-
-
-
 
 ...
