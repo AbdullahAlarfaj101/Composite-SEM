@@ -6,8 +6,6 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
     inherit = jmvcore::Options,
     public = list(
         initialize = function(
-            .caller = "gui",
-            code = "",
             latent = list(
                 list(label="Latent1", vars=list())),
             composite = list(
@@ -32,16 +30,6 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                 requiresData=TRUE,
                 ...)
 
-            private$...caller <- jmvcore::OptionString$new(
-                ".caller",
-                .caller,
-                default="gui",
-                hidden=TRUE)
-            private$..code <- jmvcore::OptionString$new(
-                "code",
-                code,
-                default="",
-                hidden=TRUE)
             private$..latent <- jmvcore::OptionArray$new(
                 "latent",
                 latent,
@@ -144,8 +132,6 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                 disattenuate,
                 default=FALSE)
 
-            self$.addOption(private$...caller)
-            self$.addOption(private$..code)
             self$.addOption(private$..latent)
             self$.addOption(private$..composite)
             self$.addOption(private$..multg)
@@ -162,8 +148,6 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
             self$.addOption(private$..disattenuate)
         }),
     active = list(
-        .caller = function() private$...caller$value,
-        code = function() private$..code$value,
         latent = function() private$..latent$value,
         composite = function() private$..composite$value,
         multg = function() private$..multg$value,
@@ -179,8 +163,6 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
         showCompositeLoadings = function() private$..showCompositeLoadings$value,
         disattenuate = function() private$..disattenuate$value),
     private = list(
-        ...caller = NA,
-        ..code = NA,
         ..latent = NA,
         ..composite = NA,
         ..multg = NA,
@@ -316,7 +298,10 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                     "bootR",
                     "LinearBench",
                     "exactFit",
-                    "disattenuate"),
+                    "disattenuate",
+                    "endogenousClass",
+                    "exogenousClass",
+                    "endogenousTerms"),
                 columns=list(
                     list(
                         `name`="group", 
@@ -402,6 +387,11 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                         `title`="p-value", 
                         `type`="number", 
                         `format`="zto,pvalue", 
+                        `visible`="(useBootstrap)"),
+                    list(
+                        `name`="t", 
+                        `title`="t", 
+                        `type`="number", 
                         `visible`="(useBootstrap)"))))
             self$add(jmvcore::Table$new(
                 options=options,
@@ -460,6 +450,11 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                         `title`="p-value", 
                         `type`="number", 
                         `format`="zto,pvalue", 
+                        `visible`="(useBootstrap)"),
+                    list(
+                        `name`="t", 
+                        `title`="t", 
+                        `type`="number", 
                         `visible`="(useBootstrap)"))))
             self$add(jmvcore::Table$new(
                 options=options,
@@ -633,7 +628,11 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                         `name`="p", 
                         `title`="p-value", 
                         `type`="number", 
-                        `format`="zto,pvalue"))))
+                        `format`="zto,pvalue"),
+                    list(
+                        `name`="t", 
+                        `title`="t", 
+                        `type`="number"))))
             self$add(jmvcore::Table$new(
                 options=options,
                 name="structuralTable",
@@ -667,7 +666,7 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                         `type`="text"),
                     list(
                         `name`="estimate", 
-                        `title`="<i>&beta;</i>", 
+                        `title`="<i>\u03B2</i>", 
                         `type`="number"),
                     list(
                         `name`="se", 
@@ -691,6 +690,11 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                         `title`="p-value", 
                         `type`="number", 
                         `format`="zto,pvalue", 
+                        `visible`="(useBootstrap)"),
+                    list(
+                        `name`="t", 
+                        `title`="t", 
+                        `type`="number", 
                         `visible`="(useBootstrap)"),
                     list(
                         `name`="r2", 
@@ -738,7 +742,7 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                         `type`="text"),
                     list(
                         `name`="estimate", 
-                        `title`="<i>&beta;</i>", 
+                        `title`="<i>\u03B2</i>", 
                         `type`="number"),
                     list(
                         `name`="se", 
@@ -762,6 +766,11 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                         `title`="p-value", 
                         `type`="number", 
                         `format`="zto,pvalue", 
+                        `visible`="(useBootstrap)"),
+                    list(
+                        `name`="t", 
+                        `title`="t", 
+                        `type`="number", 
                         `visible`="(useBootstrap)"))))
             self$add(jmvcore::Table$new(
                 options=options,
@@ -816,7 +825,19 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                 options=options,
                 name="csemOutput",
                 title="Multi-Group Analysis & Advanced Outputs",
-                visible="(multg)"))}))
+                visible="(multg)",
+                clearWith=list(
+                    "data",
+                    "latent",
+                    "composite",
+                    "multg",
+                    "alt",
+                    "useBootstrap",
+                    "bootR",
+                    "endogenousClass",
+                    "exogenousClass",
+                    "endogenousTerms",
+                    "disattenuate")))}))
 
 CompositeSEMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "CompositeSEMBase",
@@ -843,8 +864,6 @@ CompositeSEMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'
 #' 
 #' @param data TO ADD
-#' @param .caller .
-#' @param code The lavaan syntax
 #' @param latent A list containing named lists that define the \code{label} of
 #'   the latent endogenous variable(s) and the \code{vars} that belong to that
 #'   latent.
@@ -894,8 +913,6 @@ CompositeSEMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @export
 CompositeSEM <- function(
     data,
-    .caller = "gui",
-    code = "",
     latent = list(
                 list(label="Latent1", vars=list())),
     composite = list(
@@ -927,8 +944,6 @@ CompositeSEM <- function(
     if (inherits(exogenousClass, "formula")) exogenousClass <- jmvcore::decomposeFormula(exogenousClass)
 
     options <- CompositeSEMOptions$new(
-        .caller = .caller,
-        code = code,
         latent = latent,
         composite = composite,
         multg = multg,
