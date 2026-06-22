@@ -89,6 +89,9 @@ items:
         - LinearBench
         - exactFit
         - disattenuate
+        - endogenousClass
+        - exogenousClass
+        - endogenousTerms
       columns:
         - name: group
           title: 'Group'
@@ -161,6 +164,10 @@ items:
           type: number
           format: zto,pvalue
           visible: (useBootstrap)
+        - name: t
+          title: 't'
+          type: number
+          visible: (useBootstrap)
 
     - name: outerCommonFactorsTable
       title: 'Outer Model of Common Factors'
@@ -210,6 +217,10 @@ items:
           title: 'p-value'
           type: number
           format: zto,pvalue
+          visible: (useBootstrap)
+        - name: t
+          title: 't'
+          type: number
           visible: (useBootstrap)
 
     - name: reliabilityTable
@@ -361,6 +372,9 @@ items:
           title: 'p-value'
           type: number
           format: zto,pvalue
+        - name: t
+          title: 't'
+          type: number
 
     - name: structuralTable
       title: 'Inner Model (Structural Relationships)'
@@ -390,7 +404,7 @@ items:
           title: 'Outcome'
           type: text
         - name: estimate
-          title: '<i>&beta;</i>'
+          title: '<i>β</i>'
           type: number
         - name: se
           title: 'SE'
@@ -410,6 +424,10 @@ items:
           title: 'p-value'
           type: number
           format: zto,pvalue
+          visible: (useBootstrap)
+        - name: t
+          title: 't'
+          type: number
           visible: (useBootstrap)
         - name: r2
           title: 'R²'
@@ -450,7 +468,7 @@ items:
           title: 'Outcome'
           type: text
         - name: estimate
-          title: '<i>&beta;</i>'
+          title: '<i>β</i>'
           type: number
         - name: se
           title: 'SE'
@@ -470,6 +488,10 @@ items:
           title: 'p-value'
           type: number
           format: zto,pvalue
+          visible: (useBootstrap)
+        - name: t
+          title: 't'
+          type: number
           visible: (useBootstrap)
 
     - name: predictTable
@@ -518,5 +540,17 @@ items:
       title: 'Multi-Group Analysis & Advanced Outputs'
       type: Preformatted
       visible: (multg)
+      clearWith:
+        - data
+        - latent
+        - composite
+        - multg
+        - alt
+        - useBootstrap
+        - bootR
+        - endogenousClass
+        - exogenousClass
+        - endogenousTerms
+        - disattenuate
 
 ...
