@@ -9,10 +9,7 @@ maintainer: Abdullah Alarfaj <Abdullah.Alarfaj@arfajgroup.com>
 date: '2026-06-17'
 type: R
 description: >-
-  CompositeSEM 1.3 is the clean release branch of the CompositeSEM module for
-  jamovi. It keeps the original measurement-model workflow and adds the improved
-  drag-and-drop structural-role builder, directional path blocks, and expanded
-  tabular diagnostics introduced in the 1.2.1 development branch.
+  Composite-SEM is a comprehensive module for jamovi designed to estimate, analyze, test, and study linear and multi-group structural equation models. This module brings professional-grade composite-based Structural Equation Modeling (SEM) to a user-friendly graphical interface.
 analyses:
   - title: CompositeSEM
     name: CompositeSEM
