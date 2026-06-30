@@ -142,7 +142,8 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                      hasCommonFactors  <- FALSE
                                      active_constructs <- c()
                                      ignored_vars      <- c()
-                                     
+                                     cleaning_vars     <- c() # indicators of active constructs, used for data cleaning
+
                                      # A) Latent Variables
                                      for (item in self$options$latent) {
                                        if (length(item$vars) > 0 && nzchar(item$label)) {
@@ -153,12 +154,13 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                                                   paste0(safe_label, " =~ ", paste(safe_vars, collapse=" + ")))
                                            hasCommonFactors  <- TRUE
                                            active_constructs <- c(active_constructs, item$label)
+                                           cleaning_vars      <- c(cleaning_vars, item$vars)
                                          } else {
                                            ignored_vars <- c(ignored_vars, item$label)
                                          }
                                        }
                                      }
-                                     
+
                                      # B) Composite Variables
                                      for (item in self$options$composite) {
                                        if (length(item$vars) > 0 && nzchar(item$label)) {
@@ -168,12 +170,15 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                            measurement_parts <- c(measurement_parts,
                                                                   paste0(safe_label, " <~ ", paste(safe_vars, collapse=" + ")))
                                            active_constructs <- c(active_constructs, item$label)
+                                           cleaning_vars      <- c(cleaning_vars, item$vars)
                                          } else {
                                            ignored_vars <- c(ignored_vars, item$label)
                                          }
                                        }
                                      }
-                                     
+                                     cleaning_vars <- unique(cleaning_vars)
+
+                                     cleaningSummaryTable    <- self$results$cleaningSummaryTable
                                      infoTable               <- self$results$infoTable
                                      fitTable                <- self$results$fitTable
                                      exactFitTable           <- self$results$exactFitTable
@@ -188,6 +193,7 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                      csemOutput              <- self$results$csemOutput
                                      
                                      # Clear existing data from tables
+                                     cleaningSummaryTable$deleteRows()
                                      infoTable$deleteRows()
                                      fitTable$deleteRows()
                                      exactFitTable$deleteRows()
@@ -252,7 +258,68 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                      }
                                      
                                      model <- paste(measurement_string, final_structural_part, sep="\n\n")
-                                     
+
+                                     # Data Cleaning: runs after the model syntax is built but before cSEM sees
+                                     # the data. `working_data` is what gets sent to cSEM::csem() below - either
+                                     # the untouched jamovi data, or the cleaned version from `.cleanSEM_router()`
+                                     # (see CompositeSEM.cleaning.R). Every detail is written to
+                                     # `cleaningSummaryTable` so the user can see exactly what was done.
+                                     working_data <- self$data
+                                     if (isTRUE(self$options$dataCleaningEnabled)) {
+                                       if (length(cleaning_vars) == 0) {
+                                         cleaningSummaryTable$addRow(rowKey="msg", values=list(
+                                           property = "Message",
+                                           value    = "No indicator variables available to clean."
+                                         ))
+                                       } else {
+                                         cleaning_method  <- self$options$cleaningMethod
+                                         cleaning_results <- .cleanSEM_router(self$data, cleaning_method, cleaning_vars)
+                                         cleaning_summary <- cleaning_results$summary
+
+                                         if (cleaning_summary$status == "Error") {
+                                           cleaningSummaryTable$addRow(rowKey="status", values=list(
+                                             property = "Status",
+                                             value    = paste("Error -", cleaning_summary$error_message)
+                                           ))
+                                           # Keep going with the uncleaned data rather than failing the whole analysis
+                                         } else {
+                                           working_data <- cleaning_results$clean_data
+
+                                           cleaningSummaryTable$addRow(rowKey="method", values=list(
+                                             property = "Cleaning method used",
+                                             value    = cleaning_method
+                                           ))
+                                           cleaningSummaryTable$addRow(rowKey="rows_deleted", values=list(
+                                             property = "Rows deleted (listwise deletion)",
+                                             value    = as.character(cleaning_summary$rows_deleted)
+                                           ))
+                                           cleaningSummaryTable$addRow(rowKey="values_imputed", values=list(
+                                             property = "Values imputed (total)",
+                                             value    = as.character(cleaning_summary$values_imputed)
+                                           ))
+
+                                           # Per-variable breakdown of imputed values
+                                           for (v in names(cleaning_summary$per_variable)) {
+                                             cleaningSummaryTable$addRow(rowKey=paste0("var_", v), values=list(
+                                               property = paste0("Values imputed in '", v, "'"),
+                                               value    = as.character(cleaning_summary$per_variable[[v]])
+                                             ))
+                                           }
+
+                                           # Any automatic fallbacks or warnings (e.g. mean requested on a
+                                           # categorical variable) are surfaced to the user as separate rows
+                                           if (length(cleaning_summary$notes) > 0) {
+                                             for (i in seq_along(cleaning_summary$notes)) {
+                                               cleaningSummaryTable$addRow(rowKey=paste0("note_", i), values=list(
+                                                 property = "Note",
+                                                 value    = cleaning_summary$notes[i]
+                                               ))
+                                             }
+                                           }
+                                         }
+                                       }
+                                     }
+
                                      # --- Setup ---
                                      multGroupVar     <- self$options$multg
                                      estimationModel  <- self$options$alt
@@ -272,7 +339,7 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                      # --- Run cSEM ---
                                      tryCatch({
                                        
-                                      csem_args <- list(.data=self$data, .model=model)
+                                      csem_args <- list(.data=working_data, .model=model)
                                        
                                        if (!is.null(multGroupVar) && multGroupVar != "")
                                          csem_args$.id <- multGroupVar
