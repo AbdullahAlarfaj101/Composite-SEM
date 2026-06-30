@@ -6,6 +6,8 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
     inherit = jmvcore::Options,
     public = list(
         initialize = function(
+            dataCleaningEnabled = FALSE,
+            cleaningMethod = "listwise",
             latent = list(
                 list(label="Latent1", vars=list())),
             composite = list(
@@ -30,6 +32,21 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                 requiresData=TRUE,
                 ...)
 
+            private$..dataCleaningEnabled <- jmvcore::OptionBool$new(
+                "dataCleaningEnabled",
+                dataCleaningEnabled,
+                default=FALSE)
+            private$..cleaningMethod <- jmvcore::OptionList$new(
+                "cleaningMethod",
+                cleaningMethod,
+                options=list(
+                    "listwise",
+                    "mean",
+                    "median",
+                    "mode",
+                    "regression",
+                    "knn"),
+                default="listwise")
             private$..latent <- jmvcore::OptionArray$new(
                 "latent",
                 latent,
@@ -132,6 +149,8 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                 disattenuate,
                 default=FALSE)
 
+            self$.addOption(private$..dataCleaningEnabled)
+            self$.addOption(private$..cleaningMethod)
             self$.addOption(private$..latent)
             self$.addOption(private$..composite)
             self$.addOption(private$..multg)
@@ -148,6 +167,8 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
             self$.addOption(private$..disattenuate)
         }),
     active = list(
+        dataCleaningEnabled = function() private$..dataCleaningEnabled$value,
+        cleaningMethod = function() private$..cleaningMethod$value,
         latent = function() private$..latent$value,
         composite = function() private$..composite$value,
         multg = function() private$..multg$value,
@@ -163,6 +184,8 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
         showCompositeLoadings = function() private$..showCompositeLoadings$value,
         disattenuate = function() private$..disattenuate$value),
     private = list(
+        ..dataCleaningEnabled = NA,
+        ..cleaningMethod = NA,
         ..latent = NA,
         ..composite = NA,
         ..multg = NA,
@@ -184,6 +207,7 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
     inherit = jmvcore::Group,
     active = list(
         constructsTable = function() private$.items[["constructsTable"]],
+        cleaningSummaryTable = function() private$.items[["cleaningSummaryTable"]],
         infoTable = function() private$.items[["infoTable"]],
         fitTable = function() private$.items[["fitTable"]],
         exactFitTable = function() private$.items[["exactFitTable"]],
@@ -220,6 +244,26 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                     list(
                         `name`="indicators", 
                         `title`="Indicators", 
+                        `type`="text"))))
+            self$add(jmvcore::Table$new(
+                options=options,
+                name="cleaningSummaryTable",
+                title="Data Cleaning Summary",
+                visible="(dataCleaningEnabled)",
+                clearWith=list(
+                    "data",
+                    "latent",
+                    "composite",
+                    "dataCleaningEnabled",
+                    "cleaningMethod"),
+                columns=list(
+                    list(
+                        `name`="property", 
+                        `title`="Property", 
+                        `type`="text"),
+                    list(
+                        `name`="value", 
+                        `title`="Value", 
                         `type`="text"))))
             self$add(jmvcore::Table$new(
                 options=options,
@@ -847,7 +891,7 @@ CompositeSEMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             super$initialize(
                 package = "CompositeSEM",
                 name = "CompositeSEM",
-                version = c(1,3,0),
+                version = c(1,4,0),
                 options = options,
                 results = CompositeSEMResults$new(options=options),
                 data = data,
@@ -864,6 +908,11 @@ CompositeSEMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'
 #' 
 #' @param data TO ADD
+#' @param dataCleaningEnabled If \code{TRUE}, the indicator variables used by
+#'   the defined constructs are cleaned (according to \code{cleaningMethod})
+#'   before they are passed on to cSEM.
+#' @param cleaningMethod The method used to handle missing values in the
+#'   indicator variables when \code{dataCleaningEnabled} is \code{TRUE}.
 #' @param latent A list containing named lists that define the \code{label} of
 #'   the latent endogenous variable(s) and the \code{vars} that belong to that
 #'   latent.
@@ -889,6 +938,7 @@ CompositeSEMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$constructsTable} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$cleaningSummaryTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$infoTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$fitTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$exactFitTable} \tab \tab \tab \tab \tab a table \cr
@@ -913,6 +963,8 @@ CompositeSEMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @export
 CompositeSEM <- function(
     data,
+    dataCleaningEnabled = FALSE,
+    cleaningMethod = "listwise",
     latent = list(
                 list(label="Latent1", vars=list())),
     composite = list(
@@ -944,6 +996,8 @@ CompositeSEM <- function(
     if (inherits(exogenousClass, "formula")) exogenousClass <- jmvcore::decomposeFormula(exogenousClass)
 
     options <- CompositeSEMOptions$new(
+        dataCleaningEnabled = dataCleaningEnabled,
+        cleaningMethod = cleaningMethod,
         latent = latent,
         composite = composite,
         multg = multg,
