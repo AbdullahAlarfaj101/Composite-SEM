@@ -18,6 +18,24 @@ items:
           title: 'Indicators'
           type: text
 
+    - name: cleaningSummaryTable
+      title: 'Data Cleaning Summary'
+      type: Table
+      visible: (dataCleaningEnabled)
+      clearWith:
+        - data
+        - latent
+        - composite
+        - dataCleaningEnabled
+        - cleaningMethod
+      columns:
+        - name: property
+          title: 'Property'
+          type: text
+        - name: value
+          title: 'Value'
+          type: text
+
     - name: infoTable
       title: 'Model Information'
       type: Table
