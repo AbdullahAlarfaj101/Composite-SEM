@@ -2,7 +2,7 @@
 name: CompositeSEM
 title: CompositeSEM
 menuGroup: CompositeSEM
-version: '1.3.0'
+version: '1.4.0'
 jas: '1.2'
 arbitraryCode: false
 
@@ -14,6 +14,39 @@ options:
       TO ADD
 
 ########################################################################################
+
+- name: dataCleaningEnabled
+  title: Enable data cleaning
+  type: Bool
+  default: false
+  description:
+    R: >
+      If `TRUE`, the indicator variables used by the defined constructs are cleaned
+      (according to `cleaningMethod`) before they are passed on to cSEM.
+- name: cleaningMethod
+  title: Cleaning method
+  type: List
+  options:
+  - title: Listwise deletion (remove incomplete rows)
+    name: listwise
+  - title: Mean imputation
+    name: mean
+  - title: Median imputation
+    name: median
+  - title: Mode imputation
+    name: mode
+  - title: Regression imputation
+    name: regression
+  - title: K-Nearest Neighbours (KNN) imputation
+    name: knn
+  default: listwise
+  description:
+    R: >
+      The method used to handle missing values in the indicator variables when
+      `dataCleaningEnabled` is `TRUE`.
+
+########################################################################################
+
 - name: latent
   type: Array
   default:
@@ -36,9 +69,9 @@ options:
     R: >
       A list containing named lists that define the `label` of the latent endogenous variable(s) and
       the `vars` that belong to that latent.
-########################################################################################
 
 ########################################################################################
+
 - name: composite
   type: Array
   default:
@@ -61,6 +94,7 @@ options:
     R: >
       A list containing named lists that define the `label` of the composite variables and
       the `vars` that belong to that composite.
+      
 ########################################################################################
 
 - name: multg
@@ -68,6 +102,7 @@ options:
   type: Variable
 
 ########################################################################################
+
 - name: alt
   title: Estimation method
   type: List
@@ -79,19 +114,25 @@ options:
   - title: MAXVAR
     name: MAXVAR
   default: PLS
+  
 ########################################################################################
+
 - name: useBootstrap
   title: Bootstrapping
   type: Bool
   default: false
+  
 ########################################################################################
+
 - name: bootR
   title: Number of samples
   type: Integer
   min: 50
   max: 5000
   default: 500
+  
 ########################################################################################
+
 - name: LinearBench
   title: Out-of-sample predictive power
   type: Bool
@@ -104,10 +145,6 @@ options:
   max: 100
   default: 10
 
-
-
-
-
 - name: endogenousClass
   title: Endogenous Constructs
   type: Terms
@@ -115,9 +152,9 @@ options:
   description:
     R: >
       Constructs classified as endogenous outcomes for directional structural modeling.
-########################################################################################
 
 ########################################################################################
+
 - name: exogenousClass
   title: Exogenous Constructs
   type: Terms
@@ -125,9 +162,9 @@ options:
   description:
     R: >
       Constructs classified as exogenous predictors for directional structural modeling.
-########################################################################################
 
 ########################################################################################
+
 - name: endogenousTerms
   title: Endogenous Variables Models
   type: Array
@@ -139,6 +176,7 @@ options:
     R: >
       A list of structural predictor term sets, one per construct.
       Each entry corresponds to a latent or composite construct in order.
+      
 ########################################################################################
 
 - name: exactFit
