@@ -16,7 +16,7 @@ Multigroup analysis (MGD): Perform difference tests across groups using differnt
 
 PLS predcit (out-of-sample prediction): Compare PLS model performance against standard linear model (LM) benchmarks for predictive assessment.
 
-
+-----------------------------------------------------------------------------------------------------------------
 
 **Composite-SEM 1.3 Update**
 **What is included in 1.3**
@@ -59,6 +59,7 @@ PLS predcit (out-of-sample prediction): Compare PLS model performance against st
 
 If the structural sections are left empty, CompositeSEM estimates a correlated model automatically.
 
+-----------------------------------------------------------------------------------------------------------------
 
 **Composite-SEM 1.4 Update**
 **What is included in 1.4**
