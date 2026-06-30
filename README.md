@@ -58,3 +58,20 @@ PLS predcit (out-of-sample prediction): Compare PLS model performance against st
 5. Use Directional Paths to drag predictors into each endogenous construct block.
 
 If the structural sections are left empty, CompositeSEM estimates a correlated model automatically.
+
+
+**Composite-SEM 1.4 Update**
+**What is included in 1.4**
+
+-Integrated Data Cleaning options to seamlessly handle missing values prior to model estimation.
+-Support for multiple missing data treatment methods: Listwise Deletion, Mean, Median, Mode, Regression, and KNN (K-Nearest Neighbors) imputation.
+-Smart data type handling with automatic fallback (e.g., automatically applying Mode imputation if Mean or Median methods are assigned to categorical or non-numeric variables).
+-Built-in error handling and safe execution to prevent module crashes due to missing values or incompatible data types.
+
+**Main outputs**
+
+-Data Cleaning Summary (displays the utilized cleaning method, total number of rows deleted, and total number of values imputed).
+
+**Interface overview**
+
+-A new "Data Cleaning Options" menu allows users to select their preferred missing data treatment method before proceeding with the measurement and structural model definitions.
