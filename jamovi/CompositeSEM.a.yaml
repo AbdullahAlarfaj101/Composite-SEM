@@ -18,7 +18,7 @@ options:
 - name: dataCleaningEnabled
   title: Enable data cleaning
   type: Bool
-  default: false
+  default: true
   description:
     R: >
       If `TRUE`, the indicator variables used by the defined constructs are cleaned
@@ -27,14 +27,10 @@ options:
   title: Cleaning method
   type: List
   options:
-  - title: Listwise deletion (remove incomplete rows)
+  - title: Listwise deletion
     name: listwise
   - title: Mean imputation
     name: mean
-  - title: Median imputation
-    name: median
-  - title: Mode imputation
-    name: mode
   - title: Regression imputation
     name: regression
   - title: K-Nearest Neighbours (KNN) imputation
