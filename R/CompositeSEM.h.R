@@ -6,7 +6,7 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
     inherit = jmvcore::Options,
     public = list(
         initialize = function(
-            dataCleaningEnabled = FALSE,
+            dataCleaningEnabled = TRUE,
             cleaningMethod = "listwise",
             latent = list(
                 list(label="Latent1", vars=list())),
@@ -35,15 +35,13 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
             private$..dataCleaningEnabled <- jmvcore::OptionBool$new(
                 "dataCleaningEnabled",
                 dataCleaningEnabled,
-                default=FALSE)
+                default=TRUE)
             private$..cleaningMethod <- jmvcore::OptionList$new(
                 "cleaningMethod",
                 cleaningMethod,
                 options=list(
                     "listwise",
                     "mean",
-                    "median",
-                    "mode",
                     "regression",
                     "knn"),
                 default="listwise")
@@ -963,7 +961,7 @@ CompositeSEMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @export
 CompositeSEM <- function(
     data,
-    dataCleaningEnabled = FALSE,
+    dataCleaningEnabled = TRUE,
     cleaningMethod = "listwise",
     latent = list(
                 list(label="Latent1", vars=list())),
