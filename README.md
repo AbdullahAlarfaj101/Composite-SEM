@@ -8,9 +8,13 @@ Advanced estimation techniques: Supports Partial Least Squares (PLS), Corrected 
 
 Flexible measurement models: Easily define reflective (latent) and formative (composite) constructs.
 
-Model flexibility: Support for testing both types of models: measurement (inner) model and structural (outer) model.
+Comprehensive diagnostics: Produces model fit indices, exact fit (critical value 95% of SRMR, dG, and dL), confidence intervals via bootstrapping, and out-of-sample prediction measures.
 
-Comprehensive diagnostics: Produces model fit indices, confidence intervals via bootstrapping, and out-of-sample prediction measures.
+Model flexibility: Support for testing both types of models: measurement (outer) model and structural (inner) model in a very intutive way.
+
+Extended report: When structural (inner) model invloved, direct, indirect, and total effects are reported.
+
+Missing data: Several options avaiable to deal with missing data including, listwise deletion, mean imputation, regression imputation, and K-nearest neighbours (KNN) imputation.
 
 Multigroup analysis (MGD): Perform difference tests across groups using differnt methods like permutation-based test .
 
