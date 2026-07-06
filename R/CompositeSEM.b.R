@@ -289,14 +289,20 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                              property = "Cleaning method used",
                                              value    = cleaning_method
                                            ))
-                                           cleaningSummaryTable$addRow(rowKey="rows_deleted", values=list(
-                                             property = "Rows deleted (listwise deletion)",
-                                             value    = as.character(cleaning_summary$rows_deleted)
-                                           ))
-                                           cleaningSummaryTable$addRow(rowKey="values_imputed", values=list(
-                                             property = "Values imputed (total)",
-                                             value    = as.character(cleaning_summary$values_imputed)
-                                           ))
+                                           # Only shown when rows were actually removed; a permanent
+                                           # "0 rows deleted" line is just noise for imputation methods
+                                           if (isTRUE(cleaning_summary$rows_deleted > 0)) {
+                                             cleaningSummaryTable$addRow(rowKey="rows_deleted", values=list(
+                                               property = "Rows deleted (listwise deletion)",
+                                               value    = as.character(cleaning_summary$rows_deleted)
+                                             ))
+                                           }
+                                           if (isTRUE(cleaning_summary$values_imputed > 0)) {
+                                             cleaningSummaryTable$addRow(rowKey="values_imputed", values=list(
+                                               property = "Values imputed (total)",
+                                               value    = as.character(cleaning_summary$values_imputed)
+                                             ))
+                                           }
 
                                            # Per-variable breakdown of imputed values
                                            for (v in names(cleaning_summary$per_variable)) {
@@ -1051,7 +1057,13 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                      }, error=function(e) {
                                        # If there's an error, show it in the output table and make it visible
                                        msg <- e$message
-                                       if (grepl("do not appear in the structural model", msg)) {
+                                       if (estimationModel == "GSCA") {
+                                         # Shown as a table note (like the MAXVAR message) rather than a
+                                         # thrown error, so jamovi does not dump a debug stack trace
+                                         summaryTable$setNote("gsca_error", "Currently, GSCA does not work with a correlated model (CCA/CFA).")
+                                         csemOutput$setContent("")
+                                         csemOutput$setVisible(FALSE)
+                                       } else if (grepl("do not appear in the structural model", msg)) {
                                          missing_constructs <- gsub(".*structural model:\\s*", "", msg)
                                          clean_msg <- paste0(
                                            "Please use all constructs defined in the 'Structural Roles' window. ",
