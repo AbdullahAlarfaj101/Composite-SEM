@@ -6,25 +6,16 @@
 #
 # .cleanSEM_router(data, method, vars)
 #   data   - raw data frame (self$data from jamovi)
-#   method - one of "listwise", "mean", "median", "mode", "regression", "knn"
+#   method - one of "listwise", "mean", "regression", "knn"
 #   vars   - column names to clean (indicators used by the active constructs)
 #
 # Returns list(clean_data, summary), where summary contains:
 #   method, rows_deleted, values_imputed, per_variable (named counts),
-#   notes (warnings, e.g. automatic fallback to mode), status, error_message
+#   notes (warnings, e.g. automatic fallback to mean), status, error_message
 #
 # Adding a new method: write `.cleanSEM_<name>()` with the same return shape, add it
 # to the switch() below, and register it in cleaningMethod (a.yaml / h.R).
 # =====================================================================================
-
-# R has no built-in mode function; used for mode imputation and as the fallback when
-# mean/median is requested on a non-numeric (categorical) variable.
-.cleanSEM_getMode <- function(v) {
-  uniqv <- unique(v[!is.na(v)])
-  if (length(uniqv) == 0)
-    return(NA)
-  uniqv[which.max(tabulate(match(v, uniqv)))]
-}
 
 # Dispatches to the requested cleaning method and standardises the result. Wrapped in
 # tryCatch so a failure is reported as an "Error" status instead of crashing jamovi.
@@ -57,8 +48,6 @@
     switch(method,
       "listwise"   = .cleanSEM_listwise(data, valid_vars),
       "mean"       = .cleanSEM_mean(data, valid_vars),
-      "median"     = .cleanSEM_median(data, valid_vars),
-      "mode"       = .cleanSEM_mode(data, valid_vars),
       "regression" = .cleanSEM_regression(data, valid_vars),
       "knn"        = .cleanSEM_knn(data, valid_vars),
       stop("The selected cleaning method is not supported.")
@@ -101,7 +90,7 @@
   )
 }
 
-# Mean imputation for numeric variables; falls back to mode for categorical ones.
+# Mean imputation for numeric variables; categorical variables are skipped.
 .cleanSEM_mean <- function(data, vars) {
   imputed_total <- 0L
   per_variable  <- list()
@@ -110,12 +99,11 @@
   for (v in vars) {
     nas <- is.na(data[[v]])
     if (any(nas)) {
-      if (is.numeric(data[[v]])) {
-        fill_val <- mean(data[[v]], na.rm = TRUE)
-      } else {
-        fill_val <- .cleanSEM_getMode(data[[v]])
-        notes <- c(notes, paste0("'", v, "' is categorical; mode imputation was used instead of mean."))
+      if (!is.numeric(data[[v]])) {
+        notes <- c(notes, paste0("'", v, "' is categorical and was skipped by mean imputation."))
+        next
       }
+      fill_val <- mean(data[[v]], na.rm = TRUE)
 
       if (!is.na(fill_val)) {
         data[[v]][nas]    <- fill_val
@@ -127,60 +115,19 @@
 
   list(data = data, rows_deleted = 0L, values_imputed = imputed_total,
        per_variable = per_variable, notes = notes, error_message = NULL)
-}
-
-# Median imputation for numeric variables; falls back to mode for categorical ones.
-.cleanSEM_median <- function(data, vars) {
-  imputed_total <- 0L
-  per_variable  <- list()
-  notes         <- character(0)
-
-  for (v in vars) {
-    nas <- is.na(data[[v]])
-    if (any(nas)) {
-      if (is.numeric(data[[v]])) {
-        fill_val <- stats::median(data[[v]], na.rm = TRUE)
-      } else {
-        fill_val <- .cleanSEM_getMode(data[[v]])
-        notes <- c(notes, paste0("'", v, "' is categorical; mode imputation was used instead of median."))
-      }
-
-      if (!is.na(fill_val)) {
-        data[[v]][nas]    <- fill_val
-        per_variable[[v]] <- sum(nas)
-        imputed_total     <- imputed_total + sum(nas)
-      }
-    }
-  }
-
-  list(data = data, rows_deleted = 0L, values_imputed = imputed_total,
-       per_variable = per_variable, notes = notes, error_message = NULL)
-}
-
-# Mode imputation: works natively for both numeric and categorical variables.
-.cleanSEM_mode <- function(data, vars) {
-  imputed_total <- 0L
-  per_variable  <- list()
-
-  for (v in vars) {
-    nas <- is.na(data[[v]])
-    if (any(nas)) {
-      fill_val <- .cleanSEM_getMode(data[[v]])
-      if (!is.na(fill_val)) {
-        data[[v]][nas]    <- fill_val
-        per_variable[[v]] <- sum(nas)
-        imputed_total     <- imputed_total + sum(nas)
-      }
-    }
-  }
-
-  list(data = data, rows_deleted = 0L, values_imputed = imputed_total,
-       per_variable = per_variable, notes = character(0), error_message = NULL)
 }
 
 # Predicts each missing value from the other numeric indicators via a simple lm().
+#
+# Implementation notes (these fix the two failure modes of the naive approach):
+#   1. Predictor columns are pre-filled with their own means before fitting and
+#      predicting. Otherwise any row that is missing on the target AND on one of
+#      the predictors gets an NA prediction, leaving the value un-imputed.
+#   2. The model is fit with `.y ~ .` on a prepared data frame instead of building
+#      a formula string from the raw column names, which breaks (and aborts the
+#      whole cleaning step) when jamovi variable names contain spaces or symbols.
 # Restricted to numeric variables; falls back to mean imputation when too few
-# complete rows are available to fit a stable model.
+# observed cases are available to fit a stable model.
 .cleanSEM_regression <- function(data, vars) {
   imputed_total <- 0L
   per_variable  <- list()
@@ -195,20 +142,41 @@
     notes <- c(notes, paste0("Categorical variable(s) skipped by regression imputation: ",
                               paste(non_numeric, collapse = ", ")))
 
+  # Mean-filled copy of the predictors so every row can receive a prediction
+  pred_base <- data[, num_vars, drop = FALSE]
+  for (v in num_vars) {
+    v_mean <- mean(pred_base[[v]], na.rm = TRUE)
+    pred_base[[v]][is.na(pred_base[[v]])] <- v_mean
+  }
+
   for (v in num_vars) {
     nas <- is.na(data[[v]])
     if (any(nas)) {
       predictors <- setdiff(num_vars, v)
-      form       <- stats::as.formula(paste(v, "~", paste(predictors, collapse = " + ")))
-      fit_data   <- data[!nas, num_vars, drop = FALSE]
+      v_mean     <- mean(data[[v]], na.rm = TRUE)
 
-      if (nrow(fit_data) > 5) {
-        model <- stats::lm(form, data = fit_data)
-        preds <- stats::predict(model, newdata = data[nas, num_vars, drop = FALSE])
+      if (sum(!nas) > max(5, length(predictors) + 1)) {
+        fit_data        <- pred_base[!nas, predictors, drop = FALSE]
+        fit_data[[".y"]] <- data[[v]][!nas]
+
+        preds <- tryCatch({
+          model <- stats::lm(.y ~ ., data = fit_data)
+          as.numeric(stats::predict(model, newdata = pred_base[nas, predictors, drop = FALSE]))
+        }, error = function(e) rep(NA_real_, sum(nas)))
+
+        # Any prediction that could not be computed falls back to the mean
+        bad <- !is.finite(preds)
+        if (all(bad)) {
+          notes <- c(notes, paste0("'", v, "' could not be predicted by regression; mean imputation was used instead."))
+          preds <- rep(v_mean, sum(nas))
+        } else if (any(bad)) {
+          notes <- c(notes, paste0("Some values of '", v, "' could not be predicted by regression; mean imputation was used for those."))
+          preds[bad] <- v_mean
+        }
         data[[v]][nas] <- preds
       } else {
         notes <- c(notes, paste0("'", v, "' had too few complete cases for regression; mean imputation was used instead."))
-        data[[v]][nas] <- mean(data[[v]], na.rm = TRUE)
+        data[[v]][nas] <- v_mean
       }
       per_variable[[v]] <- sum(nas)
       imputed_total     <- imputed_total + sum(nas)
