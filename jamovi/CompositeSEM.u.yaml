@@ -130,7 +130,7 @@ children:
               change: './events::onChange_alt'
           - type: CheckBox
             name: disattenuate
-            enable: (alt:PLS)
+            enable: (alt:PLS || alt:MAXVAR)
   - type: CollapseBox
     label: Options
     collapsed: true
@@ -144,8 +144,8 @@ children:
           - type: CheckBox
             name: showCompositeLoadings
   - type: CollapseBox
-    label: Data Cleaning
-    collapsed: true
+    label: Missing Data
+    collapsed: false
     stretchFactor: 1
     children:
       - type: LayoutBox
@@ -156,10 +156,6 @@ children:
           - type: ComboBox
             name: cleaningMethod
             enable: (dataCleaningEnabled)
-          - type: Label
-            label: 'cleaning is applied only to the indicator variables used by the defined Latent/Composite constructs.'
-            stretchFactor: 1
-            margin: small
 
   - type: CollapseBox
     label: Structural Roles
