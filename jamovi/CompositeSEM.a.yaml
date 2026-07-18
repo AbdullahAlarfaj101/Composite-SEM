@@ -2,7 +2,7 @@
 name: CompositeSEM
 title: CompositeSEM
 menuGroup: CompositeSEM
-version: '1.4.0'
+version: '1.5.0'
 jas: '1.2'
 arbitraryCode: false
 
@@ -16,7 +16,7 @@ options:
 ########################################################################################
 
 - name: dataCleaningEnabled
-  title: Enable data cleaning
+  title: Enable handling missing data
   type: Bool
   default: true
   description:
@@ -24,7 +24,7 @@ options:
       If `TRUE`, the indicator variables used by the defined constructs are cleaned
       (according to `cleaningMethod`) before they are passed on to cSEM.
 - name: cleaningMethod
-  title: Cleaning method
+  title: Handling method
   type: List
   options:
   - title: Listwise deletion
@@ -97,6 +97,36 @@ options:
   title: Multigroup Analysis
   type: Variable
 
+# NEW in 1.5: Multi-Group Analysis (MGA) test method selectors.
+# Each option toggles one of the group-comparison approaches supported by
+# cSEM::testMGD(), allowing users to run several MGA tests in a single pass:
+# Henseler (PLS-MGA), Sarstedt, Chin (parametric), Keil (parametric, equal
+# variances) and Nitzl (parametric, suitable for unequal variances).
+- name: mgaHenseler
+  title: Henseler (PLS-MGA)
+  type: Bool
+  default: true
+
+- name: mgaSarstedt
+  title: Sarstedt
+  type: Bool
+  default: false
+
+- name: mgaChin
+  title: Chin
+  type: Bool
+  default: false
+
+- name: mgaKeil
+  title: Keil
+  type: Bool
+  default: false
+
+- name: mgaNitzl
+  title: Nitzl (suitable for unequal variances)
+  type: Bool
+  default: false
+
 ########################################################################################
 
 - name: alt
@@ -126,6 +156,24 @@ options:
   min: 50
   max: 5000
   default: 500
+  
+# NEW in 1.5: Bootstrap confidence interval type. Selects the CI construction
+# method passed to cSEM::summarize() (.ci argument) when bootstrapping is
+# enabled: Percentile, Basic, Bias-corrected (BC), or Bias-corrected and
+# accelerated (BCa).
+- name: bootCI
+  title: Bootstrap confidence interval type
+  type: List
+  options:
+    - name: CI_percentile
+      title: Percentile
+    - name: CI_basic
+      title: Basic
+    - name: CI_bc
+      title: Bias-corrected (BC)
+    - name: CI_bca
+      title: Bias-corrected and accelerated (BCa)
+  default: CI_percentile
   
 ########################################################################################
 
@@ -193,5 +241,107 @@ options:
   title: No disattenuation
   type: Bool
   default: false
+
+# NEW in 1.5: Robust estimation. When enabled, indicator correlations are
+# computed with the Spearman rank correlation (cSEM's .approach_cor_robust
+# argument), making the estimation robust against nonnormal data and outliers.
+- name: robustEst
+  title: Robust estimation via Spearman correlation (for nonnormal data)
+  type: Bool
+  default: false
+
+# NEW in 1.5: Per-construct PLS weighting modes. An array of
+# {construct, mode} pairs (kept in sync with the defined composites by
+# jamovi/js/events.js) that is translated into cSEM's .PLS_modes argument,
+# so each composite can individually use Mode A (correlation weights) or
+# Mode B (regression weights). Applies to PLS estimation only.
+- name: modes
+  type: Array
+  default: []
+  template:
+    type: Group
+    elements:
+    - name: construct
+      type: String
+    - name: mode
+      type: List
+      options:
+      - name: modeA
+        title: Mode A
+      - name: modeB
+        title: Mode B
+      default: modeA
+
+# NEW in 1.5: Path diagram (model plot) options. The model is rendered with
+# semPlot::semPaths(); the options below control whether the plot is shown,
+# node-label abbreviation, layout algorithm, orientation, estimate labels,
+# indicator residuals, font size and significance stars.
+- name: showPlot
+  title: Plot the model
+  type: Bool
+  default: false
+
+- name: abbreviate
+  title: Abbreviate node labels
+  type: Bool
+  default: true
+
+- name: abbrevLength
+  title: Abbreviation length
+  type: Integer
+  min: 1
+  max: 20
+  default: 4
+
+- name: plotLayout
+  title: Layout
+  type: List
+  options:
+  - name: tree
+    title: Tree (Default)
+  - name: spring
+    title: Spring-embedded (Force-directed)
+  default: tree
+
+- name: plotRotation
+  title: Direction
+  type: List
+  options:
+  - name: '2'
+    title: Left-to-right / Manifests at left
+  - name: '1'
+    title: Top-down (tree) / Manifests at top
+  - name: '3'
+    title: Bottom-up / Manifests at bottom
+  - name: '4'
+    title: Right-to-left / Manifests at right
+  default: '2'
+
+- name: showEstimates
+  title: Show estimates on paths
+  type: Bool
+  default: true
+
+- name: showResiduals
+  title: Show indicator residuals
+  type: Bool
+  default: false
+
+- name: plotFontSize
+  title: Font size
+  type: List
+  options:
+  - name: small
+    title: Small
+  - name: medium
+    title: Medium (Default)
+  - name: large
+    title: Large
+  default: medium
+
+- name: showSigStars
+  title: Show significance stars (* p < .05, ** p < .01, *** p < .001)
+  type: Bool
+  default: true
 
 ...
