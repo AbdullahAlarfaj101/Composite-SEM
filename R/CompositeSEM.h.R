@@ -13,9 +13,15 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
             composite = list(
                 list(label="Composite1", vars=list())),
             multg = NULL,
+            mgaHenseler = TRUE,
+            mgaSarstedt = FALSE,
+            mgaChin = FALSE,
+            mgaKeil = FALSE,
+            mgaNitzl = FALSE,
             alt = "PLS",
             useBootstrap = FALSE,
             bootR = 500,
+            bootCI = "CI_percentile",
             LinearBench = FALSE,
             predictFolds = 10,
             endogenousClass = list(),
@@ -24,7 +30,18 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                 list()),
             exactFit = FALSE,
             showCompositeLoadings = FALSE,
-            disattenuate = FALSE, ...) {
+            disattenuate = FALSE,
+            robustEst = FALSE,
+            modes = list(),
+            showPlot = TRUE,
+            abbreviate = TRUE,
+            abbrevLength = 4,
+            plotLayout = "tree",
+            plotRotation = "2",
+            showEstimates = TRUE,
+            showResiduals = FALSE,
+            plotFontSize = "medium",
+            showSigStars = TRUE, ...) {
 
             super$initialize(
                 package="CompositeSEM",
@@ -90,6 +107,26 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
             private$..multg <- jmvcore::OptionVariable$new(
                 "multg",
                 multg)
+            private$..mgaHenseler <- jmvcore::OptionBool$new(
+                "mgaHenseler",
+                mgaHenseler,
+                default=TRUE)
+            private$..mgaSarstedt <- jmvcore::OptionBool$new(
+                "mgaSarstedt",
+                mgaSarstedt,
+                default=FALSE)
+            private$..mgaChin <- jmvcore::OptionBool$new(
+                "mgaChin",
+                mgaChin,
+                default=FALSE)
+            private$..mgaKeil <- jmvcore::OptionBool$new(
+                "mgaKeil",
+                mgaKeil,
+                default=FALSE)
+            private$..mgaNitzl <- jmvcore::OptionBool$new(
+                "mgaNitzl",
+                mgaNitzl,
+                default=FALSE)
             private$..alt <- jmvcore::OptionList$new(
                 "alt",
                 alt,
@@ -108,6 +145,15 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                 min=50,
                 max=5000,
                 default=500)
+            private$..bootCI <- jmvcore::OptionList$new(
+                "bootCI",
+                bootCI,
+                options=list(
+                    "CI_percentile",
+                    "CI_basic",
+                    "CI_bc",
+                    "CI_bca"),
+                default="CI_percentile")
             private$..LinearBench <- jmvcore::OptionBool$new(
                 "LinearBench",
                 LinearBench,
@@ -146,15 +192,93 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                 "disattenuate",
                 disattenuate,
                 default=FALSE)
+            private$..robustEst <- jmvcore::OptionBool$new(
+                "robustEst",
+                robustEst,
+                default=FALSE)
+            private$..modes <- jmvcore::OptionArray$new(
+                "modes",
+                modes,
+                default=list(),
+                template=jmvcore::OptionGroup$new(
+                    "modes",
+                    NULL,
+                    elements=list(
+                        jmvcore::OptionString$new(
+                            "construct",
+                            NULL),
+                        jmvcore::OptionList$new(
+                            "mode",
+                            NULL,
+                            options=list(
+                                "modeA",
+                                "modeB"),
+                            default="modeA"))))
+            private$..showPlot <- jmvcore::OptionBool$new(
+                "showPlot",
+                showPlot,
+                default=TRUE)
+            private$..abbreviate <- jmvcore::OptionBool$new(
+                "abbreviate",
+                abbreviate,
+                default=TRUE)
+            private$..abbrevLength <- jmvcore::OptionInteger$new(
+                "abbrevLength",
+                abbrevLength,
+                min=1,
+                max=20,
+                default=4)
+            private$..plotLayout <- jmvcore::OptionList$new(
+                "plotLayout",
+                plotLayout,
+                options=list(
+                    "tree",
+                    "spring"),
+                default="tree")
+            private$..plotRotation <- jmvcore::OptionList$new(
+                "plotRotation",
+                plotRotation,
+                options=list(
+                    "2",
+                    "1",
+                    "3",
+                    "4"),
+                default="2")
+            private$..showEstimates <- jmvcore::OptionBool$new(
+                "showEstimates",
+                showEstimates,
+                default=TRUE)
+            private$..showResiduals <- jmvcore::OptionBool$new(
+                "showResiduals",
+                showResiduals,
+                default=FALSE)
+            private$..plotFontSize <- jmvcore::OptionList$new(
+                "plotFontSize",
+                plotFontSize,
+                options=list(
+                    "small",
+                    "medium",
+                    "large"),
+                default="medium")
+            private$..showSigStars <- jmvcore::OptionBool$new(
+                "showSigStars",
+                showSigStars,
+                default=TRUE)
 
             self$.addOption(private$..dataCleaningEnabled)
             self$.addOption(private$..cleaningMethod)
             self$.addOption(private$..latent)
             self$.addOption(private$..composite)
             self$.addOption(private$..multg)
+            self$.addOption(private$..mgaHenseler)
+            self$.addOption(private$..mgaSarstedt)
+            self$.addOption(private$..mgaChin)
+            self$.addOption(private$..mgaKeil)
+            self$.addOption(private$..mgaNitzl)
             self$.addOption(private$..alt)
             self$.addOption(private$..useBootstrap)
             self$.addOption(private$..bootR)
+            self$.addOption(private$..bootCI)
             self$.addOption(private$..LinearBench)
             self$.addOption(private$..predictFolds)
             self$.addOption(private$..endogenousClass)
@@ -163,6 +287,17 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
             self$.addOption(private$..exactFit)
             self$.addOption(private$..showCompositeLoadings)
             self$.addOption(private$..disattenuate)
+            self$.addOption(private$..robustEst)
+            self$.addOption(private$..modes)
+            self$.addOption(private$..showPlot)
+            self$.addOption(private$..abbreviate)
+            self$.addOption(private$..abbrevLength)
+            self$.addOption(private$..plotLayout)
+            self$.addOption(private$..plotRotation)
+            self$.addOption(private$..showEstimates)
+            self$.addOption(private$..showResiduals)
+            self$.addOption(private$..plotFontSize)
+            self$.addOption(private$..showSigStars)
         }),
     active = list(
         dataCleaningEnabled = function() private$..dataCleaningEnabled$value,
@@ -170,9 +305,15 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
         latent = function() private$..latent$value,
         composite = function() private$..composite$value,
         multg = function() private$..multg$value,
+        mgaHenseler = function() private$..mgaHenseler$value,
+        mgaSarstedt = function() private$..mgaSarstedt$value,
+        mgaChin = function() private$..mgaChin$value,
+        mgaKeil = function() private$..mgaKeil$value,
+        mgaNitzl = function() private$..mgaNitzl$value,
         alt = function() private$..alt$value,
         useBootstrap = function() private$..useBootstrap$value,
         bootR = function() private$..bootR$value,
+        bootCI = function() private$..bootCI$value,
         LinearBench = function() private$..LinearBench$value,
         predictFolds = function() private$..predictFolds$value,
         endogenousClass = function() private$..endogenousClass$value,
@@ -180,16 +321,33 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
         endogenousTerms = function() private$..endogenousTerms$value,
         exactFit = function() private$..exactFit$value,
         showCompositeLoadings = function() private$..showCompositeLoadings$value,
-        disattenuate = function() private$..disattenuate$value),
+        disattenuate = function() private$..disattenuate$value,
+        robustEst = function() private$..robustEst$value,
+        modes = function() private$..modes$value,
+        showPlot = function() private$..showPlot$value,
+        abbreviate = function() private$..abbreviate$value,
+        abbrevLength = function() private$..abbrevLength$value,
+        plotLayout = function() private$..plotLayout$value,
+        plotRotation = function() private$..plotRotation$value,
+        showEstimates = function() private$..showEstimates$value,
+        showResiduals = function() private$..showResiduals$value,
+        plotFontSize = function() private$..plotFontSize$value,
+        showSigStars = function() private$..showSigStars$value),
     private = list(
         ..dataCleaningEnabled = NA,
         ..cleaningMethod = NA,
         ..latent = NA,
         ..composite = NA,
         ..multg = NA,
+        ..mgaHenseler = NA,
+        ..mgaSarstedt = NA,
+        ..mgaChin = NA,
+        ..mgaKeil = NA,
+        ..mgaNitzl = NA,
         ..alt = NA,
         ..useBootstrap = NA,
         ..bootR = NA,
+        ..bootCI = NA,
         ..LinearBench = NA,
         ..predictFolds = NA,
         ..endogenousClass = NA,
@@ -197,7 +355,18 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
         ..endogenousTerms = NA,
         ..exactFit = NA,
         ..showCompositeLoadings = NA,
-        ..disattenuate = NA)
+        ..disattenuate = NA,
+        ..robustEst = NA,
+        ..modes = NA,
+        ..showPlot = NA,
+        ..abbreviate = NA,
+        ..abbrevLength = NA,
+        ..plotLayout = NA,
+        ..plotRotation = NA,
+        ..showEstimates = NA,
+        ..showResiduals = NA,
+        ..plotFontSize = NA,
+        ..showSigStars = NA)
 )
 
 CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
@@ -218,14 +387,19 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
         structuralTable = function() private$.items[["structuralTable"]],
         mediationTable = function() private$.items[["mediationTable"]],
         predictTable = function() private$.items[["predictTable"]],
-        csemOutput = function() private$.items[["csemOutput"]]),
+        mgaDecisionTable = function() private$.items[["mgaDecisionTable"]],
+        mgaOverviewTable = function() private$.items[["mgaOverviewTable"]],
+        mgaTable = function() private$.items[["mgaTable"]],
+        pathPlot = function() private$.items[["pathPlot"]]),
     private = list(),
     public=list(
         initialize=function(options) {
             super$initialize(
                 options=options,
                 name="",
-                title="CompositeSEM")
+                title="CompositeSEM",
+                refs=list(
+                    "CompositeSEM"))
             self$add(jmvcore::Table$new(
                 options=options,
                 name="constructsTable",
@@ -275,11 +449,13 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                     "alt",
                     "useBootstrap",
                     "bootR",
+                    "bootCI",
                     "LinearBench",
                     "endogenousClass",
                     "exogenousClass",
                     "endogenousTerms",
-                    "disattenuate"),
+                    "disattenuate",
+                    "robustEst"),
                 columns=list(
                     list(
                         `name`="group", 
@@ -306,11 +482,13 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                     "alt",
                     "useBootstrap",
                     "bootR",
+                    "bootCI",
                     "LinearBench",
                     "endogenousClass",
                     "exogenousClass",
                     "endogenousTerms",
-                    "disattenuate"),
+                    "disattenuate",
+                    "robustEst"),
                 columns=list(
                     list(
                         `name`="group", 
@@ -338,9 +516,11 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                     "alt",
                     "useBootstrap",
                     "bootR",
+                    "bootCI",
                     "LinearBench",
                     "exactFit",
                     "disattenuate",
+                    "robustEst",
                     "endogenousClass",
                     "exogenousClass",
                     "endogenousTerms"),
@@ -378,11 +558,13 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                     "alt",
                     "useBootstrap",
                     "bootR",
+                    "bootCI",
                     "LinearBench",
                     "endogenousClass",
                     "exogenousClass",
                     "endogenousTerms",
                     "disattenuate",
+                    "robustEst",
                     "showCompositeLoadings"),
                 columns=list(
                     list(
@@ -447,11 +629,13 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                     "alt",
                     "useBootstrap",
                     "bootR",
+                    "bootCI",
                     "LinearBench",
                     "endogenousClass",
                     "exogenousClass",
                     "endogenousTerms",
-                    "disattenuate"),
+                    "disattenuate",
+                    "robustEst"),
                 columns=list(
                     list(
                         `name`="group", 
@@ -510,11 +694,13 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                     "alt",
                     "useBootstrap",
                     "bootR",
+                    "bootCI",
                     "LinearBench",
                     "endogenousClass",
                     "exogenousClass",
                     "endogenousTerms",
-                    "disattenuate"),
+                    "disattenuate",
+                    "robustEst"),
                 columns=list(
                     list(
                         `name`="group", 
@@ -555,11 +741,13 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                     "alt",
                     "useBootstrap",
                     "bootR",
+                    "bootCI",
                     "LinearBench",
                     "endogenousClass",
                     "exogenousClass",
                     "endogenousTerms",
-                    "disattenuate"),
+                    "disattenuate",
+                    "robustEst"),
                 columns=list(
                     list(
                         `name`="group", 
@@ -594,11 +782,13 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                     "alt",
                     "useBootstrap",
                     "bootR",
+                    "bootCI",
                     "LinearBench",
                     "endogenousClass",
                     "exogenousClass",
                     "endogenousTerms",
-                    "disattenuate"),
+                    "disattenuate",
+                    "robustEst"),
                 columns=list(
                     list(
                         `name`="group", 
@@ -629,11 +819,13 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                     "alt",
                     "useBootstrap",
                     "bootR",
+                    "bootCI",
                     "LinearBench",
                     "endogenousClass",
                     "exogenousClass",
                     "endogenousTerms",
-                    "disattenuate"),
+                    "disattenuate",
+                    "robustEst"),
                 columns=list(
                     list(
                         `name`="group", 
@@ -687,11 +879,13 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                     "alt",
                     "useBootstrap",
                     "bootR",
+                    "bootCI",
                     "LinearBench",
                     "endogenousClass",
                     "exogenousClass",
                     "endogenousTerms",
-                    "disattenuate"),
+                    "disattenuate",
+                    "robustEst"),
                 columns=list(
                     list(
                         `name`="group", 
@@ -759,11 +953,13 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                     "alt",
                     "useBootstrap",
                     "bootR",
+                    "bootCI",
                     "LinearBench",
                     "endogenousClass",
                     "exogenousClass",
                     "endogenousTerms",
-                    "disattenuate"),
+                    "disattenuate",
+                    "robustEst"),
                 columns=list(
                     list(
                         `name`="group", 
@@ -827,11 +1023,13 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                     "alt",
                     "useBootstrap",
                     "bootR",
+                    "bootCI",
                     "LinearBench",
                     "endogenousClass",
                     "exogenousClass",
                     "endogenousTerms",
                     "disattenuate",
+                    "robustEst",
                     "predictFolds"),
                 columns=list(
                     list(
@@ -863,10 +1061,10 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                         `name`="q2", 
                         `title`="Q\u00B2 predict", 
                         `type`="number"))))
-            self$add(jmvcore::Preformatted$new(
+            self$add(jmvcore::Table$new(
                 options=options,
-                name="csemOutput",
-                title="Multi-Group Analysis & Advanced Outputs",
+                name="mgaDecisionTable",
+                title="Multi-Group Analysis - Overall Decision (\u03B1 = 5%)",
                 visible="(multg)",
                 clearWith=list(
                     "data",
@@ -876,10 +1074,129 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                     "alt",
                     "useBootstrap",
                     "bootR",
+                    "bootCI",
                     "endogenousClass",
                     "exogenousClass",
                     "endogenousTerms",
-                    "disattenuate")))}))
+                    "disattenuate",
+                    "robustEst"),
+                columns=list(
+                    list(
+                        `name`="test", 
+                        `title`="Test Method", 
+                        `type`="text"),
+                    list(
+                        `name`="decision", 
+                        `title`="Decision (\u03B1 = 5%)", 
+                        `type`="text"))))
+            self$add(jmvcore::Table$new(
+                options=options,
+                name="mgaOverviewTable",
+                title="Multi-Group Analysis - Run Overview",
+                visible="(multg)",
+                clearWith=list(
+                    "data",
+                    "latent",
+                    "composite",
+                    "multg",
+                    "alt",
+                    "useBootstrap",
+                    "bootR",
+                    "bootCI",
+                    "endogenousClass",
+                    "exogenousClass",
+                    "endogenousTerms",
+                    "disattenuate",
+                    "robustEst"),
+                columns=list(
+                    list(
+                        `name`="property", 
+                        `title`="Run Metadata / Parameter", 
+                        `type`="text"),
+                    list(
+                        `name`="value", 
+                        `title`="Value", 
+                        `type`="text"))))
+            self$add(jmvcore::Table$new(
+                options=options,
+                name="mgaTable",
+                title="Multi-Group Comparison Test Results",
+                visible="(multg)",
+                clearWith=list(
+                    "data",
+                    "latent",
+                    "composite",
+                    "multg",
+                    "alt",
+                    "useBootstrap",
+                    "bootR",
+                    "bootCI",
+                    "endogenousClass",
+                    "exogenousClass",
+                    "endogenousTerms",
+                    "disattenuate",
+                    "robustEst"),
+                columns=list(
+                    list(
+                        `name`="comparison", 
+                        `title`="Comparison Pair", 
+                        `type`="text"),
+                    list(
+                        `name`="parameter", 
+                        `title`="Parameter", 
+                        `type`="text"),
+                    list(
+                        `name`="test", 
+                        `title`="Test Method", 
+                        `type`="text"),
+                    list(
+                        `name`="stat", 
+                        `title`="Test Statistic", 
+                        `type`="number"),
+                    list(
+                        `name`="p", 
+                        `title`="p-value", 
+                        `type`="number", 
+                        `format`="zto,pvalue"),
+                    list(
+                        `name`="decision", 
+                        `title`="Decision (\u03B1 = 5%)", 
+                        `type`="text"))))
+            self$add(jmvcore::Image$new(
+                options=options,
+                name="pathPlot",
+                title="Path Diagram",
+                width=600,
+                height=450,
+                renderFun=".plotPathDiagram",
+                visible="(showPlot)",
+                clearWith=list(
+                    "data",
+                    "latent",
+                    "composite",
+                    "multg",
+                    "alt",
+                    "useBootstrap",
+                    "bootR",
+                    "bootCI",
+                    "LinearBench",
+                    "endogenousClass",
+                    "exogenousClass",
+                    "endogenousTerms",
+                    "disattenuate",
+                    "robustEst",
+                    "modes",
+                    "showPlot",
+                    "plotLayout",
+                    "plotRotation",
+                    "showEstimates",
+                    "showResiduals",
+                    "plotFontSize",
+                    "showSigStars",
+                    "abbreviate",
+                    "abbrevLength",
+                    "dataCleaningEnabled",
+                    "cleaningMethod")))}))
 
 CompositeSEMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "CompositeSEMBase",
@@ -918,9 +1235,15 @@ CompositeSEMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   of the composite variables and the \code{vars} that belong to that
 #'   composite.
 #' @param multg .
+#' @param mgaHenseler .
+#' @param mgaSarstedt .
+#' @param mgaChin .
+#' @param mgaKeil .
+#' @param mgaNitzl .
 #' @param alt .
 #' @param useBootstrap .
 #' @param bootR .
+#' @param bootCI .
 #' @param LinearBench .
 #' @param predictFolds .
 #' @param endogenousClass Constructs classified as endogenous outcomes for
@@ -933,6 +1256,17 @@ CompositeSEMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param exactFit .
 #' @param showCompositeLoadings .
 #' @param disattenuate .
+#' @param robustEst .
+#' @param modes .
+#' @param showPlot .
+#' @param abbreviate .
+#' @param abbrevLength .
+#' @param plotLayout .
+#' @param plotRotation .
+#' @param showEstimates .
+#' @param showResiduals .
+#' @param plotFontSize .
+#' @param showSigStars .
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$constructsTable} \tab \tab \tab \tab \tab a table \cr
@@ -949,7 +1283,10 @@ CompositeSEMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$structuralTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$mediationTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$predictTable} \tab \tab \tab \tab \tab a table \cr
-#'   \code{results$csemOutput} \tab \tab \tab \tab \tab a preformatted \cr
+#'   \code{results$mgaDecisionTable} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$mgaOverviewTable} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$mgaTable} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$pathPlot} \tab \tab \tab \tab \tab an image \cr
 #' }
 #'
 #' Tables can be converted to data frames with \code{asDF} or \code{\link{as.data.frame}}. For example:
@@ -968,9 +1305,15 @@ CompositeSEM <- function(
     composite = list(
                 list(label="Composite1", vars=list())),
     multg,
+    mgaHenseler = TRUE,
+    mgaSarstedt = FALSE,
+    mgaChin = FALSE,
+    mgaKeil = FALSE,
+    mgaNitzl = FALSE,
     alt = "PLS",
     useBootstrap = FALSE,
     bootR = 500,
+    bootCI = "CI_percentile",
     LinearBench = FALSE,
     predictFolds = 10,
     endogenousClass = list(),
@@ -979,7 +1322,18 @@ CompositeSEM <- function(
                 list()),
     exactFit = FALSE,
     showCompositeLoadings = FALSE,
-    disattenuate = FALSE) {
+    disattenuate = FALSE,
+    robustEst = FALSE,
+    modes = list(),
+    showPlot = TRUE,
+    abbreviate = TRUE,
+    abbrevLength = 4,
+    plotLayout = "tree",
+    plotRotation = "2",
+    showEstimates = TRUE,
+    showResiduals = FALSE,
+    plotFontSize = "medium",
+    showSigStars = TRUE) {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
         stop("CompositeSEM requires jmvcore to be installed (restart may be required)")
@@ -999,9 +1353,15 @@ CompositeSEM <- function(
         latent = latent,
         composite = composite,
         multg = multg,
+        mgaHenseler = mgaHenseler,
+        mgaSarstedt = mgaSarstedt,
+        mgaChin = mgaChin,
+        mgaKeil = mgaKeil,
+        mgaNitzl = mgaNitzl,
         alt = alt,
         useBootstrap = useBootstrap,
         bootR = bootR,
+        bootCI = bootCI,
         LinearBench = LinearBench,
         predictFolds = predictFolds,
         endogenousClass = endogenousClass,
@@ -1009,7 +1369,18 @@ CompositeSEM <- function(
         endogenousTerms = endogenousTerms,
         exactFit = exactFit,
         showCompositeLoadings = showCompositeLoadings,
-        disattenuate = disattenuate)
+        disattenuate = disattenuate,
+        robustEst = robustEst,
+        modes = modes,
+        showPlot = showPlot,
+        abbreviate = abbreviate,
+        abbrevLength = abbrevLength,
+        plotLayout = plotLayout,
+        plotRotation = plotRotation,
+        showEstimates = showEstimates,
+        showResiduals = showResiduals,
+        plotFontSize = plotFontSize,
+        showSigStars = showSigStars)
 
     analysis <- CompositeSEMClass$new(
         options = options,
