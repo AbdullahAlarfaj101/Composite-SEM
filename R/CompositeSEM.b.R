@@ -190,8 +190,7 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                      htmtTable               <- self$results$htmtTable
                                      vifModeBTable           <- self$results$vifModeBTable
                                      reliabilityTable        <- self$results$reliabilityTable
-                                     csemOutput              <- self$results$csemOutput
-                                     
+
                                      # Clear existing data from tables
                                      cleaningSummaryTable$deleteRows()
                                      infoTable$deleteRows()
@@ -230,7 +229,6 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                      estimationModel <- self$options$alt
                                      if (estimationModel == "MAXVAR" && !isTRUE(self$options$disattenuate) && hasComposites) {
                                        summaryTable$setNote("maxvar_error", "MAXVAR only works with disattenuation if all constructs are common factors (latent variables). Please enable 'No disattenuation' or choose another estimation method.")
-                                       csemOutput$setVisible(FALSE)
                                        return()
                                      }
                                      
@@ -238,7 +236,6 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                      
                                      if (length(measurement_parts) == 0) {
                                        infoTable$addRow(rowKey="msg", values=list(property="Message", value="No constructs defined or matched."))
-                                       csemOutput$setContent("No constructs defined or matched.")
                                        return()
                                      }
                                      
@@ -353,6 +350,26 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                        if (estimationModel == 'PLS') {
                                          csem_args$.PLS_weight_scheme_inner <-
                                            if (is_auto_mode) "factorial" else "path"
+
+                                         # NEW in 1.5: Per-construct PLS weighting modes. The 'modes' option
+                                         # (a list of {construct, mode} pairs maintained by the UI) is
+                                         # converted into a named list and passed to cSEM via .PLS_modes,
+                                         # allowing each composite to be estimated with Mode A (correlation
+                                         # weights) or Mode B (regression weights) individually.
+                                         user_modes <- self$options$modes
+                                         if (!is.null(user_modes) && length(user_modes) > 0) {
+                                           pls_modes <- list()
+                                           for (m_item in user_modes) {
+                                             c_name <- m_item$construct
+                                             c_mode <- m_item$mode
+                                             if (!is.null(c_name) && c_name != "" && !is.null(c_mode) && c_mode != "") {
+                                               pls_modes[[c_name]] <- c_mode
+                                             }
+                                           }
+                                           if (length(pls_modes) > 0) {
+                                             csem_args$.PLS_modes <- pls_modes
+                                           }
+                                         }
                                        } else if (estimationModel == 'GSCA') {
                                          csem_args$.approach_weights <- 'GSCA'
                                        } else {
@@ -363,11 +380,23 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                          csem_args$.resample_method <- "bootstrap"
                                          csem_args$.R <- bootstrapSamples
                                        }
+
+                                       # NEW in 1.5: Robust estimation. When enabled, indicator correlations
+                                       # are computed with the Spearman rank correlation instead of Pearson,
+                                       # making the estimation robust against nonnormal data and outliers.
+                                       if (isTRUE(self$options$robustEst)) {
+                                         csem_args$.approach_cor_robust <- "spearman"
+                                       }
                                        
                                        csem_args$.disattenuate <- !isTRUE(self$options$disattenuate)
                                        
                                        out <- do.call(cSEM::csem, csem_args)
-                                       summ <- cSEM::summarize(out)
+                                       
+                                       # NEW in 1.5: User-selectable bootstrap confidence interval type.
+                                       # The chosen CI construction method (Percentile, Basic, BC or BCa)
+                                       # is forwarded to cSEM::summarize() via its .ci argument.
+                                       boot_ci_type <- self$options$bootCI
+                                       summ <- cSEM::summarize(out, .ci = boot_ci_type)
                                        
                                        # Check if it is multi-group
                                        # Assign into the method's captured env so the plot block (outside
@@ -449,6 +478,47 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                          property = "Disattenuate reflective measures",
                                          value = if (!isTRUE(self$options$disattenuate)) "Yes" else "No"
                                        ))
+                                       
+                                       # NEW in 1.5: Extended Estimation Information table. The rows below
+                                       # document the robust estimation setting and the full bootstrap
+                                       # configuration (enabled/disabled, number of samples, CI type) so the
+                                       # analysis setup is fully transparent and reproducible from the output.
+                                       infoTable$addRow(rowKey="robust_est", values=list(
+                                         group = "",
+                                         property = "Spearman rank correlation (robust estimation)",
+                                         value = if (isTRUE(self$options$robustEst)) "Yes" else "No"
+                                       ))
+                                       
+                                       # Add bootstrap info
+                                       use_boot <- isTRUE(self$options$useBootstrap)
+                                       infoTable$addRow(rowKey="use_bootstrap", values=list(
+                                         group = "",
+                                         property = "Bootstrapping",
+                                         value = if (use_boot) "Yes" else "No"
+                                       ))
+                                       
+                                       if (use_boot) {
+                                         infoTable$addRow(rowKey="boot_samples", values=list(
+                                           group = "",
+                                           property = "Number of bootstrap samples",
+                                           value = as.character(self$options$bootR)
+                                         ))
+                                         
+                                         ci_map <- list(
+                                           CI_percentile = "Percentile",
+                                           CI_basic = "Basic",
+                                           CI_bc = "Bias-corrected (BC)",
+                                           CI_bca = "Bias-corrected and accelerated (BCa)"
+                                         )
+                                         ci_title <- ci_map[[self$options$bootCI]]
+                                         if (is.null(ci_title)) ci_title <- self$options$bootCI
+                                         
+                                         infoTable$addRow(rowKey="boot_ci_type", values=list(
+                                           group = "",
+                                           property = "Bootstrap confidence interval type",
+                                           value = ci_title
+                                         ))
+                                       }
                                        
                                        # Get construct types
                                        c_types <- if (is_multi) out[[1]]$Information$Arguments$.model$construct_type else out$Information$Arguments$.model$construct_type
@@ -1029,40 +1099,207 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                            }
                                          }
                                        }
-                                       
-                                       # 8. Multigroup Analysis Output
-                                       mga_output <- ""
-                                       mga_header <- ""
-                                       if (!is.null(multGroupVar) && multGroupVar != "") {
-                                         mga_header <- paste0("\n(Multigroup Analysis by: ", multGroupVar, ")\n")
-                                         perm_R <- if (is.numeric(bootstrapSamples) && bootstrapSamples > 0)
-                                           bootstrapSamples else 50
-                                         mga_output <- tryCatch({
-                                           mga_res   <- cSEM::testMGD(.object=out, .R_permutation=perm_R)
-                                           mga_print <- capture.output(print(mga_res))
-                                           paste("\n--- Multi-Group Difference Tests ---\n",
-                                                 "Permutations:", perm_R, "\n\n",
-                                                 paste(mga_print, collapse="\n"))
-                                         }, error=function(e) {
-                                           paste("\n--- Multi-Group Difference Error ---\n", e$message)
-                                         })
                                          
-                                         csemOutput$setContent(paste0(mga_header, "\n", mga_output))
-                                         csemOutput$setVisible(TRUE)
-                                       } else {
-                                         csemOutput$setContent("")
-                                         csemOutput$setVisible(FALSE)
-                                       }
+                                         # 8. Multigroup Analysis Output
+                                         # NEW in 1.5: Structured Multi-Group Analysis. Group differences are
+                                         # tested with cSEM::testMGD() using the user-selected test methods
+                                         # (Henseler PLS-MGA, Sarstedt, Chin, Keil, Nitzl) and the results are
+                                         # presented in three native jamovi tables (overall decision, run
+                                         # overview/metadata, per-parameter comparisons) instead of the raw
+                                         # preformatted text dump used in earlier versions.
+                                         mgaDecisionTable <- self$results$mgaDecisionTable
+                                         mgaOverviewTable <- self$results$mgaOverviewTable
+                                         mgaTable         <- self$results$mgaTable
+                                         
+                                         mgaDecisionTable$deleteRows()
+                                         mgaOverviewTable$deleteRows()
+                                         mgaTable$deleteRows()
+                                         
+                                         if (!is.null(multGroupVar) && multGroupVar != "") {
+                                           perm_R <- if (is.numeric(bootstrapSamples) && bootstrapSamples > 0)
+                                             bootstrapSamples else 50
+
+                                           # Patch cSEM::testMGD dynamically to support models without structural paths (correlated models)
+                                           testMGD_patched <- cSEM::testMGD
+                                           body_str <- deparse(body(testMGD_patched))
+                                           target_idx <- grep("n <- nrow\\(path_resamples\\)", body_str)
+                                           if (length(target_idx) > 0) {
+                                             body_str[target_idx] <- "n <- if (!is.null(path_resamples)) nrow(path_resamples) else if (!is.null(loading_resamples)) nrow(loading_resamples) else nrow(weight_resamples)"
+                                             body(testMGD_patched) <- parse(text = paste(body_str, collapse = "\n"))
+                                           }
+
+                                            # Determine MGA test methods to run
+                                            mga_methods <- character(0)
+                                            if (isTRUE(self$options$mgaHenseler)) mga_methods <- c(mga_methods, "Henseler")
+                                            if (isTRUE(self$options$mgaSarstedt)) mga_methods <- c(mga_methods, "Sarstedt")
+                                            if (isTRUE(self$options$mgaChin))     mga_methods <- c(mga_methods, "Chin")
+                                            if (isTRUE(self$options$mgaKeil))     mga_methods <- c(mga_methods, "Keil")
+                                            if (isTRUE(self$options$mgaNitzl))    mga_methods <- c(mga_methods, "Nitzl")
+
+                                            mga_res   <- NULL
+                                            mga_error <- NULL
+                                            if (length(mga_methods) > 0) {
+                                              tryCatch({
+                                                mga_res <- testMGD_patched(.object=out, .R_permutation=perm_R, .approach_mgd=mga_methods)
+                                              }, error=function(e) {
+                                                mga_error <<- e$message
+                                              })
+                                            }
+                                           
+                                           if (!is.null(mga_error)) {
+                                             clean_msg <- paste0(
+                                               "Multi-Group Analysis failed: ", mga_error, 
+                                               ". Please verify your grouping variable has adequate sample size per group, check for missing values, or choose a different missing data handling method."
+                                             )
+                                             jmvcore::reject(clean_msg)
+                                           } else if (!is.null(mga_res)) {
+                                             mgaDecisionTable$setVisible(TRUE)
+                                             mgaOverviewTable$setVisible(TRUE)
+                                             mgaTable$setVisible(TRUE)
+                                             
+                                             # A) Populate Overall Decision Table
+                                             methods_to_check <- mga_methods
+                                             for (m in methods_to_check) {
+                                               res_m <- mga_res[[m]]
+                                               if (is.null(res_m)) next
+                                               
+                                               overall_dec <- res_m$Decision_overall
+                                               if (!is.null(overall_dec) && length(overall_dec) > 0) {
+                                                 dec_val <- overall_dec[[1]][[1]]
+                                                 dec_str <- if (isTRUE(dec_val)) "Do not reject" else "Reject"
+                                                 
+                                                 mgaDecisionTable$addRow(rowKey=m, values=list(
+                                                   test     = m,
+                                                   decision = dec_str
+                                                 ))
+                                               }
+                                             }
+                                             
+                                             # B) Populate Overview Table
+                                             info <- mga_res$Information
+                                             
+                                             # Total permutation runs / admissibility
+                                             mgaOverviewTable$addRow(rowKey="tot_perm", values=list(
+                                               property = "Total Permutation Runs",
+                                               value    = as.character(info$Information_permutation$Total_runs)
+                                             ))
+                                             mgaOverviewTable$addRow(rowKey="admiss_perm", values=list(
+                                               property = "Admissible Permutation Results",
+                                               value    = as.character(info$Information_permutation$Number_admissibles)
+                                             ))
+                                             mgaOverviewTable$addRow(rowKey="perm_seed", values=list(
+                                               property = "Permutation Seed",
+                                               value    = as.character(info$Information_permutation$Permutation_seed)
+                                             ))
+                                             
+                                             # Groups info
+                                             g_names <- info$Group_names
+                                             g_obs   <- info$Number_of_observations
+                                             
+                                             for (g_idx in seq_along(g_names)) {
+                                               g_name <- g_names[g_idx]
+                                               # Group N
+                                               mgaOverviewTable$addRow(rowKey=paste0("obs_", g_name), values=list(
+                                                 property = paste0("Observations per group - '", g_name, "'"),
+                                                 value    = as.character(g_obs[g_name])
+                                               ))
+                                               
+                                               # Bootstrap admissibility
+                                               g_admiss <- info$Information_bootstrap$Number_admissibles[[g_name]]
+                                               if (!is.null(g_admiss)) {
+                                                 mgaOverviewTable$addRow(rowKey=paste0("admiss_boot_", g_name), values=list(
+                                                   property = paste0("Admissible bootstrap results - '", g_name, "'"),
+                                                   value    = as.character(g_admiss)
+                                                 ))
+                                               }
+                                               
+                                               # Bootstrap seed
+                                               g_seed <- info$Information_bootstrap$Bootstrap_seed[[g_name]]
+                                               if (!is.null(g_seed)) {
+                                                 mgaOverviewTable$addRow(rowKey=paste0("seed_boot_", g_name), values=list(
+                                                   property = paste0("Bootstrap seed - '", g_name, "'"),
+                                                   value    = as.character(g_seed)
+                                                 ))
+                                               }
+                                             }
+                                             
+                                             # C) Populate Comparison Results Table
+                                             row_counter <- 1
+                                             for (m in methods_to_check) {
+                                               res_m <- mga_res[[m]]
+                                               if (is.null(res_m)) next
+                                               
+                                               stat_obj <- res_m$Test_statistic
+                                               p_obj    <- res_m$P_value$none
+                                               dec_obj  <- res_m$Decision$none$`5%`
+                                               
+                                               if (is.list(stat_obj)) {
+                                                 # Nested by comparison pair (e.g. Chin, Keil, Henseler, Nitzl)
+                                                 for (pair in names(stat_obj)) {
+                                                   stats  <- stat_obj[[pair]]
+                                                   p_vals <- p_obj[[pair]]
+                                                   decs   <- dec_obj[[pair]]
+                                                   
+                                                   for (param in names(stats)) {
+                                                     stat_val <- as.numeric(stats[param])
+                                                     p_val    <- as.numeric(p_vals[param])
+                                                     dec_bool <- decs[param]
+                                                     dec_str  <- if (isTRUE(dec_bool)) "Do not reject" else "Reject"
+                                                     
+                                                     mgaTable$addRow(rowKey=as.character(row_counter), values=list(
+                                                       comparison = pair,
+                                                       parameter  = param,
+                                                       test       = m,
+                                                       stat       = stat_val,
+                                                       p          = p_val,
+                                                       decision   = dec_str
+                                                     ))
+                                                     row_counter <- row_counter + 1
+                                                   }
+                                                 }
+                                               } else if (is.numeric(stat_obj)) {
+                                                 # Direct vector (e.g. Sarstedt)
+                                                 for (param in names(stat_obj)) {
+                                                   stat_val <- as.numeric(stat_obj[param])
+                                                   p_val    <- as.numeric(p_obj[param])
+                                                   dec_bool <- dec_obj[param]
+                                                   dec_str  <- if (isTRUE(dec_bool)) "Do not reject" else "Reject"
+                                                   
+                                                   mgaTable$addRow(rowKey=as.character(row_counter), values=list(
+                                                     comparison = "Overall",
+                                                     parameter  = param,
+                                                     test       = m,
+                                                     stat       = stat_val,
+                                                     p          = p_val,
+                                                     decision   = dec_str
+                                                   ))
+                                                   row_counter <- row_counter + 1
+                                                 }
+                                               }
+                                             }
+                                           } else {
+                                             mgaDecisionTable$setVisible(FALSE)
+                                             mgaOverviewTable$setVisible(FALSE)
+                                             mgaTable$setVisible(FALSE)
+                                           }
+                                         } else {
+                                           mgaDecisionTable$setVisible(FALSE)
+                                           mgaOverviewTable$setVisible(FALSE)
+                                           mgaTable$setVisible(FALSE)
+                                         }
                                        
                                      }, error=function(e) {
-                                       # If there's an error, show it in the output table and make it visible
+                                       # If there's an error, report it as a clean, user-friendly message
+                                       # (UPDATED in 1.5: errors are now raised via jmvcore::reject() with
+                                       # actionable guidance instead of being dumped into a raw text output)
                                        msg <- e$message
-                                       if (estimationModel == "GSCA") {
+                                       if (estimationModel == "GSCA" && is_auto_mode) {
                                          # Shown as a table note (like the MAXVAR message) rather than a
                                          # thrown error, so jamovi does not dump a debug stack trace
+                                         # (UPDATED in 1.5: the note is now limited to auto-mode/correlated
+                                         # models; GSCA failures in structural models are reported through
+                                         # the standard error path below instead of being masked)
                                          summaryTable$setNote("gsca_error", "Currently, GSCA does not work with a correlated model (CCA/CFA).")
-                                         csemOutput$setContent("")
-                                         csemOutput$setVisible(FALSE)
                                        } else if (grepl("do not appear in the structural model", msg)) {
                                          missing_constructs <- gsub(".*structural model:\\s*", "", msg)
                                          clean_msg <- paste0(
@@ -1071,17 +1308,289 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                          )
                                          jmvcore::reject(clean_msg)
                                        } else {
-                                         csemOutput$setContent(paste0(
-                                           "An error occurred during cSEM analysis (", estimationModel, "):\n\n",
-                                           e$message, "\n\nModel sent to cSEM:\n", model
-                                         ))
-                                         csemOutput$setVisible(TRUE)
+                                         clean_msg <- paste0(
+                                           "An error occurred during estimation (", estimationModel, "): ",
+                                           e$message, ". Please check your model specification, ensure indicator variables exist in the data set, or verify that your grouping variable has adequate sample size."
+                                         )
+                                         jmvcore::reject(clean_msg)
                                        }
                                      })
                                      
-                                     # Plot generation removed in light version
-                                   }
-                                 )
+                                      # --- Plot Generation ---
+                                      # NEW in 1.5: Path diagram support. This block collects the estimates
+                                      # produced above (loadings, weights, paths, construct correlations and
+                                      # their p-values) into a lightweight state object that is handed to
+                                      # the .plotPathDiagram render function. The image is automatically
+                                      # resized to accommodate multigroup analyses (one panel per group).
+                                      if (isTRUE(self$options$showPlot) && length(groups) > 0) {
+                                        image <- self$results$pathPlot
+
+                                        # Get lists of constructs
+                                        latent_names <- character(0)
+                                        for (item in self$options$latent) {
+                                          if (length(item$vars) > 0 && nzchar(item$label) && is_used(item$label)) {
+                                            latent_names <- c(latent_names, item$label)
+                                          }
+                                        }
+
+                                        composite_names <- character(0)
+                                        for (item in self$options$composite) {
+                                          if (length(item$vars) > 0 && nzchar(item$label) && is_used(item$label)) {
+                                            composite_names <- c(composite_names, item$label)
+                                          }
+                                        }
+
+                                        # Build lightweight state: just the data the render function needs
+                                        plot_state <- tryCatch({
+                                          group_data <- list()
+                                          for (g in groups) {
+                                            s <- if (is_multi) summs[[g]] else summs[[1]]
+                                            group_data[[if (nzchar(g)) g else "single"]] <- list(
+                                              loading_estimates = as.data.frame(s$Estimates$Loading_estimates),
+                                              weight_estimates  = as.data.frame(s$Estimates$Weight_estimates),
+                                              path_estimates    = as.data.frame(s$Estimates$Path_estimates),
+                                              construct_vcv     = s$Estimates$Construct_VCV,
+                                              exo_construct_correlation = if (!is.null(s$Estimates$Exo_construct_correlation)) as.data.frame(s$Estimates$Exo_construct_correlation) else NULL
+                                            )
+                                          }
+
+                                          # Build lavaan-compatible model syntax
+                                          model_lavaan <- gsub("<~", "=~", model, fixed = TRUE)
+
+                                          list(
+                                            model_lavaan    = model_lavaan,
+                                            plot_data       = as.data.frame(working_data),
+                                            latent_names    = latent_names,
+                                            composite_names = composite_names,
+                                            groups          = groups,
+                                            is_multi        = is_multi,
+                                            group_data      = group_data
+                                          )
+                                        }, error = function(e) {
+                                          NULL
+                                        })
+
+                                        if (!is.null(plot_state)) {
+                                          n_grps <- length(groups)
+                                          if (n_grps <= 1) {
+                                            image$setSize(600, 450)
+                                          } else if (n_grps == 2) {
+                                            image$setSize(900, 450)
+                                          } else {
+                                            image$setSize(900, 600)
+                                          }
+                                          image$setState(plot_state)
+                                        }
+                                      }
+                                    },
+                                    # NEW in 1.5: Path diagram render function. Rebuilds a lavaan model
+                                    # skeleton from the cSEM syntax (composites are mapped "<~" -> "=~" so
+                                    # lavaan can parse them), draws it with semPlot::semPaths(), overlays
+                                    # the cSEM estimates as edge labels (with optional significance stars),
+                                    # renders composite constructs as hexagons to visually distinguish them
+                                    # from latent variables (ellipses), and honours all user plot options
+                                    # (layout, rotation, residuals, font size, label abbreviation). For
+                                    # multigroup models each group is drawn in its own panel.
+                                    .plotPathDiagram = function(image, ggtheme, theme, ...) {
+                                      plot_state <- image$state
+                                      if (is.null(plot_state))
+                                        return(FALSE)
+
+                                      # Retrieve UI options
+                                      plot_layout    <- self$options$plotLayout
+                                      plot_rotation  <- as.integer(self$options$plotRotation %||% 1)
+                                      show_estimates <- isTRUE(self$options$showEstimates)
+                                      show_residuals <- isTRUE(self$options$showResiduals)
+                                      font_size_opt  <- self$options$plotFontSize
+                                      show_sig_stars <- isTRUE(self$options$showSigStars)
+                                      abbreviate     <- isTRUE(self$options$abbreviate)
+                                      abbrev_length  <- as.integer(self$options$abbrevLength %||% 4)
+                                      n_char_nodes   <- if (abbreviate) abbrev_length else 0
+
+                                      # Map font size
+                                      cex_val <- 0.8
+                                      if (font_size_opt == "small") {
+                                        cex_val <- 0.6
+                                      } else if (font_size_opt == "large") {
+                                        cex_val <- 1.0
+                                      }
+
+                                      res <- tryCatch({
+                                        # Unpack state
+                                        model_lavaan    <- plot_state$model_lavaan
+                                        plot_data       <- plot_state$plot_data
+                                        latent_names    <- plot_state$latent_names
+                                        composite_names <- plot_state$composite_names
+                                        groups          <- plot_state$groups
+                                        is_multi        <- plot_state$is_multi
+                                        group_data      <- plot_state$group_data
+                                        all_construct_names <- c(latent_names, composite_names)
+
+                                        # Build dummy lavaan fit from the model syntax
+                                        fit_lavaan <- tryCatch(
+                                          lavaan::sem(model_lavaan, data = plot_data, do.fit = FALSE),
+                                          error = function(e) NULL
+                                        )
+                                        if (is.null(fit_lavaan))
+                                          return(FALSE)
+
+                                        m_base <- tryCatch(
+                                          semPlot::semPlotModel(fit_lavaan),
+                                          error = function(e) NULL
+                                        )
+                                        if (is.null(m_base))
+                                          return(FALSE)
+
+                                        hexagon_shape <- list(
+                                          x = c(1, 0.5, -0.5, -1, -0.5, 0.5),
+                                          y = c(0, 0.866, 0.866, 0, -0.866, -0.866)
+                                        )
+
+                                        plots_list <- list()
+                                        for (g in groups) {
+                                          m <- m_base
+                                          gkey <- if (nzchar(g)) g else "single"
+                                          gd <- group_data[[gkey]]
+                                          if (is.null(gd))
+                                            next
+
+                                          # Map estimates
+                                          pars <- m@Pars
+                                          custom_labels <- character(nrow(pars))
+
+                                          for (i in 1:nrow(pars)) {
+                                            lhs  <- pars$lhs[i]
+                                            rhs  <- pars$rhs[i]
+                                            edge <- pars$edge[i]
+
+                                            est_val <- NA
+                                            p_val <- NA
+
+                                            if (edge == "->") {
+                                              if (lhs %in% latent_names) {
+                                                idx <- which(gd$loading_estimates$Name == paste0(lhs, " =~ ", rhs))
+                                                if (length(idx) > 0) {
+                                                  est_val <- gd$loading_estimates$Estimate[idx]
+                                                  if ("p_value" %in% names(gd$loading_estimates))
+                                                    p_val <- gd$loading_estimates$p_value[idx]
+                                                }
+                                              } else if (lhs %in% composite_names) {
+                                                idx <- which(gd$weight_estimates$Name == paste0(lhs, " <~ ", rhs))
+                                                if (length(idx) > 0) {
+                                                  est_val <- gd$weight_estimates$Estimate[idx]
+                                                  if ("p_value" %in% names(gd$weight_estimates))
+                                                    p_val <- gd$weight_estimates$p_value[idx]
+                                                }
+                                                pars$lhs[i] <- rhs
+                                                pars$rhs[i] <- lhs
+                                              }
+                                            } else if (edge == "~>") {
+                                              idx <- which(gd$path_estimates$Name == paste0(rhs, " ~ ", lhs))
+                                              if (length(idx) > 0) {
+                                                est_val <- gd$path_estimates$Estimate[idx]
+                                                if ("p_value" %in% names(gd$path_estimates))
+                                                  p_val <- gd$path_estimates$p_value[idx]
+                                              }
+                                            } else if (edge == "<->") {
+                                              vcv <- gd$construct_vcv
+                                              if (lhs %in% all_construct_names && rhs %in% all_construct_names) {
+                                                if (!is.null(vcv) && lhs %in% rownames(vcv) && rhs %in% colnames(vcv))
+                                                  est_val <- vcv[lhs, rhs]
+                                              }
+                                              exo_df <- gd$exo_construct_correlation
+                                              if (!is.null(exo_df) && nrow(exo_df) > 0) {
+                                                key1 <- paste0(lhs, " ~~ ", rhs)
+                                                key2 <- paste0(rhs, " ~~ ", lhs)
+                                                idx <- which(exo_df$Name == key1 | exo_df$Name == key2)
+                                                if (length(idx) > 0) {
+                                                  p_val <- exo_df$p_value[idx[1]]
+                                                }
+                                              }
+                                            }
+
+                                            if (!is.na(est_val)) {
+                                              pars$est[i] <- est_val
+                                              # Create custom label
+                                              lbl <- sprintf("%.2f", est_val)
+                                              if (show_sig_stars && !is.na(p_val)) {
+                                                stars <- if (p_val < 0.001) "***" else if (p_val < 0.01) "**" else if (p_val < 0.05) "*" else ""
+                                                lbl <- paste0(lbl, stars)
+                                              }
+                                              custom_labels[i] <- lbl
+                                            } else {
+                                              custom_labels[i] <- ""
+                                            }
+                                          }
+
+                                          m@Pars <- pars
+
+                                          plot_obj <- tryCatch(
+                                            semPlot::semPaths(
+                                              m,
+                                              whatLabels = if (show_estimates) "est" else "name",
+                                              nCharNodes = n_char_nodes,
+                                              residuals = show_residuals,
+                                              layout = plot_layout,
+                                              rotation = plot_rotation,
+                                              theme = "classic",
+                                              edge.label.cex = cex_val,
+                                              label.cex = cex_val,
+                                              DoNotPlot = TRUE,
+                                              polygonList = list(hexagon = hexagon_shape)
+                                            ),
+                                            error = function(e) NULL
+                                          )
+
+                                          if (!is.null(plot_obj)) {
+                                            # Add custom labels with significance stars
+                                            if (show_estimates) {
+                                              edge_labels <- plot_obj$graphAttributes$Edges$labels
+                                              for (i in seq_along(edge_labels)) {
+                                                if (i <= length(custom_labels) && nzchar(custom_labels[i])) {
+                                                  edge_labels[i] <- custom_labels[i]
+                                                }
+                                              }
+                                              plot_obj$graphAttributes$Edges$labels <- edge_labels
+                                            }
+
+                                            node_names <- plot_obj$graphAttributes$Nodes$names
+                                            orig_names <- names(node_names)
+                                            if (is.null(orig_names)) orig_names <- node_names
+                                            for (comp in composite_names) {
+                                              idx <- which(orig_names == comp | node_names == comp)
+                                              if (length(idx) > 0)
+                                                plot_obj$graphAttributes$Nodes$shape[idx] <- "hexagon"
+                                            }
+                                            plots_list[[g]] <- plot_obj
+                                          }
+                                        }
+
+                                        if (length(plots_list) == 0)
+                                          return(FALSE)
+
+                                        n_plots <- length(plots_list)
+                                        if (is_multi && n_plots > 1) {
+                                          if (n_plots == 2) {
+                                            par(mfrow = c(1, 2))
+                                          } else if (n_plots <= 4) {
+                                            par(mfrow = c(2, 2))
+                                          } else {
+                                            par(mfrow = c(ceiling(n_plots / 3), 3))
+                                          }
+                                          for (g in names(plots_list)) {
+                                            plot(plots_list[[g]])
+                                            title(g, line = 0.5)
+                                          }
+                                        } else {
+                                          plot(plots_list[[1]])
+                                        }
+                                        TRUE
+                                      }, error = function(e) {
+                                        FALSE
+                                      })
+                                      return(res)
+                                    }
+                                  )
 )
 
 # Null-coalescing operator (available in R >= 4.4, polyfill for older R)
