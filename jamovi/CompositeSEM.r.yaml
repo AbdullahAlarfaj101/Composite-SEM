@@ -7,7 +7,7 @@ jrs:   '1.1'
 # to the analysis so it appears in the References section of the jamovi output.
 refs:
     - CompositeSEM
-    - cSEMcSEM
+    - cSEM
     - henselerSchuberth2021
 
 items:
