@@ -1,0 +1,54 @@
+---
+
+# NEW in 1.5: Source file for the module's bibliography. jmvtools compiles
+# this file into R/00jmv.R (.jmvrefs); references listed under `refs:` in
+# CompositeSEM.r.yaml are shown in the References section of the jamovi
+# output. The first four entries reproduce the references that already
+# shipped with the module; the 'CompositeSEM' entry adds the module's own
+# citation to the jamovi output.
+
+refs:
+    CompositeSEM:
+        type: software
+        author: Alarfaj, Abdullah and Alamer, Abdullah A.
+        year: 2026
+        title: 'Composite-SEM'
+        publisher: '[Jamovi module]'
+        url: https://github.com/AbdullahAlarfaj101/Composite-SEM
+
+    cSEM:
+        type: manual
+        author: Rademaker, Manuel E. and Schuberth, Florian
+        year: 2020
+        title: 'cSEM: Composite-Based Structural Equation Modeling'
+        publisher: R package
+        url: https://floschuberth.github.io/cSEM/
+
+    henselerSchuberth2021:
+        type: book
+        author: Henseler, Jörg and Schuberth, Florian
+        year: 2021
+        title: 'Composite-Based Structural Equation Modeling: Analyzing Latent and Emergent Variables'
+        publisher: The Guilford Press
+
+    schuberthHenselerDijkstra2018:
+        type: article
+        author: Schuberth, Florian and Henseler, Jörg and Dijkstra, Theo K.
+        year: 2018
+        title: 'Confirmatory composite analysis'
+        publisher: Frontiers in Psychology
+        volume: 9
+        pages: 2541
+        doi: 10.3389/fpsyg.2018.02541
+
+    dijkstraHenseler2015:
+        type: article
+        author: Dijkstra, Theo K. and Henseler, Jörg
+        year: 2015
+        title: 'Consistent partial least squares path modeling'
+        publisher: MIS Quarterly
+        volume: 39
+        number: 2
+        pages: 297-316
+
+...
