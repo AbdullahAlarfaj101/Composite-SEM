@@ -22,6 +22,37 @@ PLS predcit (out-of-sample prediction): Compare PLS model performance against st
 
 -----------------------------------------------------------------------------------------------------------------
 
+**Composite-SEM 1.5 Update**
+**What is included in 1.5**
+
+- Path diagram: automatic visualization of the estimated model using semPlot, with composites drawn as hexagons and latent variables as ellipses, estimates displayed on paths, optional significance stars (* p < .05, ** p < .01, *** p < .001), and separate panels for each group in multigroup analyses.
+- Full plot customization: layout (tree or spring-embedded), direction/rotation, node label abbreviation, indicator residuals, font size, and estimate label toggles.
+- Structured Multi-Group Analysis (MGA): group difference tests are now presented in native jamovi tables (overall decision, run overview/metadata, and per-parameter comparison results) instead of a raw text printout.
+- Selectable MGA test methods: Henseler (PLS-MGA), Sarstedt, Chin, Keil, and Nitzl (suitable for unequal variances) can be run individually or combined in a single pass.
+- MGA support for correlated models: testMGD is dynamically patched so group comparisons also work for models without structural paths (CFA/CCA-style correlated models).
+- Per-construct PLS weighting modes: each composite can individually be estimated with Mode A (correlation weights) or Mode B (regression weights), automatically synchronized with the defined composites in the interface.
+- Bootstrap confidence interval types: Percentile, Basic, Bias-corrected (BC), and Bias-corrected and accelerated (BCa).
+- Robust estimation via Spearman rank correlation for nonnormal data and outliers.
+- Cleaner error reporting: estimation and MGA failures now produce concise, actionable messages instead of raw debug output.
+
+**Main outputs**
+
+- Path Diagram (customizable model plot).
+- Multi-Group Analysis - Overall Decision table.
+- Multi-Group Analysis - Run Overview table (permutation runs, admissible results, seeds, and observations per group).
+- Multi-Group Comparison Test Results table (test statistic, p-value, and decision per parameter and comparison pair).
+- Extended Estimation Information table now also reports robust estimation, bootstrapping status, number of bootstrap samples, and the confidence interval type.
+
+**Interface overview**
+
+- A new "Plot" menu controls the path diagram and all of its display options.
+- A new "Multigroup Analysis Options" menu allows selecting which MGA test methods to run.
+- A new "Weights Modes" menu lists the defined composites with a Mode A / Mode B selector for each (PLS estimation only).
+- The "Bootstrapping Options" menu now includes the bootstrap confidence interval type in addition to the number of samples.
+- The "Model Estimation" menu now includes the robust (Spearman) estimation option.
+- The "Data Cleaning Options" labels were renamed to "Enable handling missing data" / "Handling method" for clarity.
+
+
 **Composite-SEM 1.4 Update**
 **What is included in 1.4**
 
