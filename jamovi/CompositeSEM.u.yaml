@@ -90,8 +90,26 @@ children:
   - type: LayoutBox
     margin: large
     children:
+      - type: CheckBox
+        name: useBootstrap
       - type: Label
-        label: 'Note: Defining constructs estimates a correlated model automatically.'
+        label: 'Bootstrapping is needed to generate important indices (such as p-value and SE).'
+        stretchFactor: 1
+        margin: small
+      - type: Label
+        label: ''
+        stretchFactor: 1
+        margin: small
+      - type: Label
+        label: 'Note: Defining the constructs above will automatically estimate a correlated'
+        stretchFactor: 1
+        margin: small
+      - type: Label
+        label: 'model (e.g., CFA/CCA) which is recommended before running the structural model.'
+        stretchFactor: 1
+        margin: small
+      - type: Label
+        label: ''
         stretchFactor: 1
         margin: small
       - type: Label
@@ -99,23 +117,26 @@ children:
         stretchFactor: 1
         margin: small
   - type: CollapseBox
-    label: Bootstrapping
+    label: Bootstrapping Options
     collapsed: true
     stretchFactor: 1
     children:
       - type: LayoutBox
         margin: large
         children:
-          - type: CheckBox
-            name: useBootstrap
-          - type: TextBox
-            name: bootR
-            format: number
-            enable: (useBootstrap)
-          - type: Label
-            label: 'Note: Bootstrapping is needed to generate important indices (such as p-value and SE)'
-            stretchFactor: 1
-            margin: small
+          - type: LayoutBox
+            style: inline
+            children:
+              - type: TextBox
+                name: bootR
+                format: number
+                enable: (useBootstrap)
+          - type: LayoutBox
+            style: inline
+            children:
+              - type: ComboBox
+                name: bootCI
+                enable: (useBootstrap)
   - type: CollapseBox
     label: Model Estimation
     collapsed: true
@@ -124,13 +145,52 @@ children:
       - type: LayoutBox
         margin: large
         children:
-          - type: ComboBox
-            name: alt
-            events:
-              change: './events::onChange_alt'
+          - type: LayoutBox
+            style: inline
+            children:
+              - type: ComboBox
+                name: alt
+                events:
+                  change: './events::onChange_alt'
+          - type: CheckBox
+            name: robustEst
           - type: CheckBox
             name: disattenuate
             enable: (alt:PLS || alt:MAXVAR)
+  - type: CollapseBox
+    label: Weights Modes
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: LayoutBox
+        margin: large
+        children:
+          - type: ListBox
+            name: modes
+            height: auto
+            template:
+              type: LayoutBox
+              margin: normal
+              children:
+                - type: TextBox
+                  name: construct
+                  valueKey:
+                    - construct
+                  enable: false
+                  borderless: true
+                  stretchFactor: 1
+                  margin: normal
+                - type: ComboBox
+                  name: mode
+                  valueKey:
+                    - mode
+            label: 'Note: Weight modes apply only to PLS estimation.'
+            stretchFactor: 1
+            margin: small
+          - type: Label
+            label: 'Note: Mode B is typically the default weighting scheme.'
+            stretchFactor: 1
+            margin: small
   - type: CollapseBox
     label: Options
     collapsed: true
@@ -156,6 +216,33 @@ children:
           - type: ComboBox
             name: cleaningMethod
             enable: (dataCleaningEnabled)
+
+  - type: CollapseBox
+    label: Multigroup Analysis Options
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: LayoutBox
+        margin: large
+        children:
+          - type: CheckBox
+            name: mgaHenseler
+            enable: (multg)
+          - type: LayoutBox
+            style: inline
+            children:
+              - type: CheckBox
+                name: mgaSarstedt
+                enable: (multg)
+              - type: CheckBox
+                name: mgaChin
+                enable: (multg)
+              - type: CheckBox
+                name: mgaKeil
+                enable: (multg)
+          - type: CheckBox
+            name: mgaNitzl
+            enable: (multg)
 
   - type: CollapseBox
     label: Structural Roles
@@ -266,5 +353,44 @@ children:
             name: predictFolds
             format: number
             enable: (LinearBench)
+
+  - type: CollapseBox
+    label: Plot
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: LayoutBox
+        margin: large
+        children:
+          - type: CheckBox
+            name: showPlot
+            events:
+              change: './events::onChange_showPlot'
+          - type: CheckBox
+            name: abbreviate
+            enable: (showPlot)
+          - type: TextBox
+            name: abbrevLength
+            format: number
+            enable: (showPlot && abbreviate)
+
+          - type: CheckBox
+            name: showSigStars
+            enable: (showPlot)
+          - type: CheckBox
+            name: showEstimates
+            enable: (showPlot)
+          - type: CheckBox
+            name: showResiduals
+            enable: (showPlot)
+          - type: ComboBox
+            name: plotFontSize
+            enable: (showPlot)
+          - type: ComboBox
+            name: plotLayout
+            enable: (showPlot)
+          - type: ComboBox
+            name: plotRotation
+            enable: (showPlot)
 
 compilerMode: tame
