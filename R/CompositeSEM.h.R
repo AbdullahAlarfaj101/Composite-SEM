@@ -33,7 +33,7 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
             disattenuate = FALSE,
             robustEst = FALSE,
             modes = list(),
-            showPlot = TRUE,
+            showPlot = FALSE,
             abbreviate = TRUE,
             abbrevLength = 4,
             plotLayout = "tree",
@@ -217,7 +217,7 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
             private$..showPlot <- jmvcore::OptionBool$new(
                 "showPlot",
                 showPlot,
-                default=TRUE)
+                default=FALSE)
             private$..abbreviate <- jmvcore::OptionBool$new(
                 "abbreviate",
                 abbreviate,
@@ -1206,7 +1206,7 @@ CompositeSEMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             super$initialize(
                 package = "CompositeSEM",
                 name = "CompositeSEM",
-                version = c(1,4,0),
+                version = c(1,5,0),
                 options = options,
                 results = CompositeSEMResults$new(options=options),
                 data = data,
@@ -1325,7 +1325,7 @@ CompositeSEM <- function(
     disattenuate = FALSE,
     robustEst = FALSE,
     modes = list(),
-    showPlot = TRUE,
+    showPlot = FALSE,
     abbreviate = TRUE,
     abbrevLength = 4,
     plotLayout = "tree",
