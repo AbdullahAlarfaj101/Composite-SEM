@@ -205,7 +205,7 @@ children:
             name: showCompositeLoadings
   - type: CollapseBox
     label: Missing Data
-    collapsed: false
+    collapsed: true
     stretchFactor: 1
     children:
       - type: LayoutBox
