@@ -22,6 +22,7 @@ const events = {
             } else if (endogenousTermsChanges.hasChanged) {
                 cleanPathTerms(ui, this);
             }
+            updateModes(ui, this);
         } catch (err) {
             if (ui.debugLabel) {
                 ui.debugLabel.setPropertyValue('label', 'Error in update: ' + err.message + '\nStack: ' + err.stack);
@@ -84,6 +85,7 @@ const events = {
             updateSuppliers(ui, this);
             cleanRoleSelections(ui, this);
             cleanPathTerms(ui, this);
+            updateModes(ui, this);
         } catch (err) {
             if (ui.debugLabel) {
                 ui.debugLabel.setPropertyValue('label', 'Error in onChange_items_changed: ' + err.message + '\nStack: ' + err.stack);
@@ -96,6 +98,7 @@ const events = {
             updateSuppliers(ui, this);
             cleanRoleSelections(ui, this);
             cleanPathTerms(ui, this);
+            updateModes(ui, this);
         } catch (err) {
             if (ui.debugLabel) {
                 ui.debugLabel.setPropertyValue('label', 'Error in onChange_constructName: ' + err.message + '\nStack: ' + err.stack);
@@ -103,7 +106,31 @@ const events = {
         }
     },
 
+    // UPDATED in 1.5: When the estimation method changes, refresh the
+    // per-construct weighting mode list so the Mode A / Mode B selectors are
+    // only enabled while PLS estimation is active.
     onChange_alt: function(ui) {
+        try {
+            updateModes(ui, this);
+        } catch (err) {
+            if (ui.debugLabel) {
+                ui.debugLabel.setPropertyValue('label', 'Error in onChange_alt: ' + err.message + '\nStack: ' + err.stack);
+            }
+        }
+    },
+
+    // NEW in 1.5: When the path diagram is (re-)enabled, switch estimate
+    // labels back on so the plot is informative by default.
+    onChange_showPlot: function(ui) {
+        try {
+            if (ui.showPlot.value() === true) {
+                ui.showEstimates.setValue(true);
+            }
+        } catch (err) {
+            if (ui.debugLabel) {
+                ui.debugLabel.setPropertyValue('label', 'Error in onChange_showPlot: ' + err.message + '\nStack: ' + err.stack);
+            }
+        }
     }
 };
 
@@ -305,6 +332,72 @@ function normalize(value) {
     if (value === undefined || value === null)
         return [];
     return Array.isArray(value) ? value : [ value ];
+}
+
+// NEW in 1.5: Keeps the 'modes' option (per-construct PLS weighting modes)
+// in sync with the composites defined in the UI. Newly added composites are
+// appended with Mode B as the default weighting scheme, removed composites
+// are dropped, and existing selections are preserved. The mode selectors are
+// enabled only when PLS is the active estimation method, since cSEM's
+// .PLS_modes argument applies exclusively to PLS weighting.
+function updateModes(ui, context) {
+    var compositeItems = context.cloneArray(ui.composite.value(), []);
+    var compositeLabels = getLabels(compositeItems);
+    
+    var currentModes = context.cloneArray(ui.modes.value(), []);
+    var newModes = [];
+    var changed = false;
+    
+    for (var i = 0; i < compositeLabels.length; i++) {
+        var label = compositeLabels[i];
+        var existing = null;
+        for (var j = 0; j < currentModes.length; j++) {
+            if (currentModes[j] && currentModes[j].construct === label) {
+                existing = currentModes[j];
+                break;
+            }
+        }
+        
+        if (existing) {
+            newModes.push(existing);
+        } else {
+            newModes.push({
+                construct: label,
+                mode: "modeB"
+            });
+            changed = true;
+        }
+    }
+    
+    if (currentModes.length !== newModes.length) {
+        changed = true;
+    } else {
+        for (var i = 0; i < newModes.length; i++) {
+            if (currentModes[i].construct !== newModes[i].construct || currentModes[i].mode !== newModes[i].mode) {
+                changed = true;
+                break;
+            }
+        }
+    }
+    
+    if (changed) {
+        ui.modes.setValue(newModes);
+    }
+    
+    var estimationMethod = ui.alt.value();
+    var isPLS = (estimationMethod === "PLS");
+    var newOptions = [
+        { name: "modeA", title: "Mode A" },
+        { name: "modeB", title: "Mode B" }
+    ];
+
+    ui.modes.applyToItems(0, function(item, index) {
+        if (index < compositeLabels.length) {
+            item.controls[0].setPropertyValue('label', compositeLabels[index]);
+            item.controls[1].setPropertyValue('options', newOptions);
+            item.controls[1].setPropertyValue('enable', isPLS);
+        }
+    });
 }
 
 module.exports = events;
