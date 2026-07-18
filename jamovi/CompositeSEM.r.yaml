@@ -3,6 +3,11 @@ name:  CompositeSEM
 title: CompositeSEM
 jrs:   '1.1'
 
+# NEW in 1.5: Attach the module's own citation (defined in jamovi/refs.yaml)
+# to the analysis so it appears in the References section of the jamovi output.
+refs:
+    - CompositeSEM
+
 items:
     - name: constructsTable
       title: 'Model Structure Summary'
@@ -47,11 +52,13 @@ items:
         - alt
         - useBootstrap
         - bootR
+        - bootCI
         - LinearBench
         - endogenousClass
         - exogenousClass
         - endogenousTerms
         - disattenuate
+        - robustEst
       columns:
         - name: group
           title: 'Group'
@@ -75,11 +82,13 @@ items:
         - alt
         - useBootstrap
         - bootR
+        - bootCI
         - LinearBench
         - endogenousClass
         - exogenousClass
         - endogenousTerms
         - disattenuate
+        - robustEst
       columns:
         - name: group
           title: 'Group'
@@ -104,9 +113,11 @@ items:
         - alt
         - useBootstrap
         - bootR
+        - bootCI
         - LinearBench
         - exactFit
         - disattenuate
+        - robustEst
         - endogenousClass
         - exogenousClass
         - endogenousTerms
@@ -139,11 +150,13 @@ items:
         - alt
         - useBootstrap
         - bootR
+        - bootCI
         - LinearBench
         - endogenousClass
         - exogenousClass
         - endogenousTerms
         - disattenuate
+        - robustEst
         - showCompositeLoadings
       columns:
         - name: group
@@ -198,11 +211,13 @@ items:
         - alt
         - useBootstrap
         - bootR
+        - bootCI
         - LinearBench
         - endogenousClass
         - exogenousClass
         - endogenousTerms
         - disattenuate
+        - robustEst
       columns:
         - name: group
           title: 'Group'
@@ -252,11 +267,13 @@ items:
         - alt
         - useBootstrap
         - bootR
+        - bootCI
         - LinearBench
         - endogenousClass
         - exogenousClass
         - endogenousTerms
         - disattenuate
+        - robustEst
       columns:
         - name: group
           title: 'Group'
@@ -291,11 +308,13 @@ items:
         - alt
         - useBootstrap
         - bootR
+        - bootCI
         - LinearBench
         - endogenousClass
         - exogenousClass
         - endogenousTerms
         - disattenuate
+        - robustEst
       columns:
         - name: group
           title: 'Group'
@@ -325,11 +344,13 @@ items:
         - alt
         - useBootstrap
         - bootR
+        - bootCI
         - LinearBench
         - endogenousClass
         - exogenousClass
         - endogenousTerms
         - disattenuate
+        - robustEst
       columns:
         - name: group
           title: 'Group'
@@ -356,11 +377,13 @@ items:
         - alt
         - useBootstrap
         - bootR
+        - bootCI
         - LinearBench
         - endogenousClass
         - exogenousClass
         - endogenousTerms
         - disattenuate
+        - robustEst
       columns:
         - name: group
           title: 'Group'
@@ -405,11 +428,13 @@ items:
         - alt
         - useBootstrap
         - bootR
+        - bootCI
         - LinearBench
         - endogenousClass
         - exogenousClass
         - endogenousTerms
         - disattenuate
+        - robustEst
       columns:
         - name: group
           title: 'Group'
@@ -466,11 +491,13 @@ items:
         - alt
         - useBootstrap
         - bootR
+        - bootCI
         - LinearBench
         - endogenousClass
         - exogenousClass
         - endogenousTerms
         - disattenuate
+        - robustEst
       columns:
         - name: group
           title: 'Group'
@@ -524,11 +551,13 @@ items:
         - alt
         - useBootstrap
         - bootR
+        - bootCI
         - LinearBench
         - endogenousClass
         - exogenousClass
         - endogenousTerms
         - disattenuate
+        - robustEst
         - predictFolds
       columns:
         - name: group
@@ -554,9 +583,13 @@ items:
           title: 'Q² predict'
           type: number
 
-    - name: csemOutput
-      title: 'Multi-Group Analysis & Advanced Outputs'
-      type: Preformatted
+    # NEW in 1.5: Structured Multi-Group Analysis output. The three tables
+    # below (overall decision, run overview/metadata, and per-parameter
+    # comparison results) replace the raw preformatted text dump of
+    # cSEM::testMGD() that was used in earlier versions.
+    - name: mgaDecisionTable
+      title: 'Multi-Group Analysis - Overall Decision (α = 5%)'
+      type: Table
       visible: (multg)
       clearWith:
         - data
@@ -566,9 +599,122 @@ items:
         - alt
         - useBootstrap
         - bootR
+        - bootCI
         - endogenousClass
         - exogenousClass
         - endogenousTerms
         - disattenuate
+        - robustEst
+      columns:
+        - name: test
+          title: 'Test Method'
+          type: text
+        - name: decision
+          title: 'Decision (α = 5%)'
+          type: text
+
+    - name: mgaOverviewTable
+      title: 'Multi-Group Analysis - Run Overview'
+      type: Table
+      visible: (multg)
+      clearWith:
+        - data
+        - latent
+        - composite
+        - multg
+        - alt
+        - useBootstrap
+        - bootR
+        - bootCI
+        - endogenousClass
+        - exogenousClass
+        - endogenousTerms
+        - disattenuate
+        - robustEst
+      columns:
+        - name: property
+          title: 'Run Metadata / Parameter'
+          type: text
+        - name: value
+          title: 'Value'
+          type: text
+
+    - name: mgaTable
+      title: 'Multi-Group Comparison Test Results'
+      type: Table
+      visible: (multg)
+      clearWith:
+        - data
+        - latent
+        - composite
+        - multg
+        - alt
+        - useBootstrap
+        - bootR
+        - bootCI
+        - endogenousClass
+        - exogenousClass
+        - endogenousTerms
+        - disattenuate
+        - robustEst
+      columns:
+        - name: comparison
+          title: 'Comparison Pair'
+          type: text
+        - name: parameter
+          title: 'Parameter'
+          type: text
+        - name: test
+          title: 'Test Method'
+          type: text
+        - name: stat
+          title: 'Test Statistic'
+          type: number
+        - name: p
+          title: 'p-value'
+          type: number
+          format: zto,pvalue
+        - name: decision
+          title: 'Decision (α = 5%)'
+          type: text
+
+    # NEW in 1.5: Path diagram of the estimated model, rendered with
+    # semPlot::semPaths() via the .plotPathDiagram render function.
+    # (The legacy 'csemOutput' preformatted text element was removed in 1.5,
+    # as its multigroup content is now presented in the MGA tables above.)
+    - name: pathPlot
+      title: 'Path Diagram'
+      type: Image
+      width: 600
+      height: 450
+      renderFun: .plotPathDiagram
+      visible: (showPlot)
+      clearWith:
+        - data
+        - latent
+        - composite
+        - multg
+        - alt
+        - useBootstrap
+        - bootR
+        - bootCI
+        - LinearBench
+        - endogenousClass
+        - exogenousClass
+        - endogenousTerms
+        - disattenuate
+        - robustEst
+        - modes
+        - showPlot
+        - plotLayout
+        - plotRotation
+        - showEstimates
+        - showResiduals
+        - plotFontSize
+        - showSigStars
+        - abbreviate
+        - abbrevLength
+        - dataCleaningEnabled
+        - cleaningMethod
 
 ...
