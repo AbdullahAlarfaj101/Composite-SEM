@@ -3,7 +3,7 @@ title: CompositeSEM
 # The name of the module
 name: CompositeSEM
 # The version of the module
-version: 1.4.0
+version: 1.5.0
 # The minimum version of jamovi that this module requires
 jamovi: '2.0.0'
 
