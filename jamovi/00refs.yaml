@@ -1,16 +1,9 @@
 ---
 
-# NEW in 1.5: Source file for the module's bibliography. jmvtools compiles
-# this file into R/00jmv.R (.jmvrefs); references listed under `refs:` in
-# CompositeSEM.r.yaml are shown in the References section of the jamovi
-# output. The first four entries reproduce the references that already
-# shipped with the module; the 'CompositeSEM' entry adds the module's own
-# citation to the jamovi output.
-
 refs:
     CompositeSEM:
         type: software
-        author: Alarfaj, Abdullah and Alamer, Abdullah A.
+        author: Al arfaj, A. A., & Alamer, A. A.
         year: 2026
         title: 'Composite-SEM'
         publisher: '[Jamovi module]'
@@ -18,22 +11,22 @@ refs:
 
     cSEM:
         type: manual
-        author: Rademaker, Manuel E. and Schuberth, Florian
+        author: Rademaker, M. E., & Schuberth, F.
         year: 2020
-        title: 'cSEM: Composite-Based Structural Equation Modeling'
+        title: 'cSEM: Composite-based structural equation modeling'
         publisher: R package
         url: https://floschuberth.github.io/cSEM/
 
     henselerSchuberth2021:
         type: book
-        author: Henseler, Jörg and Schuberth, Florian
+        author: Henseler, J., & Schuberth, F.
         year: 2021
-        title: 'Composite-Based Structural Equation Modeling: Analyzing Latent and Emergent Variables'
+        title: 'Composite-based structural equation modeling: Analyzing latent and emergent variables'
         publisher: The Guilford Press
 
     schuberthHenselerDijkstra2018:
         type: article
-        author: Schuberth, Florian and Henseler, Jörg and Dijkstra, Theo K.
+        author: Schuberth, F., Henseler, J., & Dijkstra, T. K.
         year: 2018
         title: 'Confirmatory composite analysis'
         publisher: Frontiers in Psychology
@@ -43,7 +36,7 @@ refs:
 
     dijkstraHenseler2015:
         type: article
-        author: Dijkstra, Theo K. and Henseler, Jörg
+        author: Dijkstra, T. K., & Henseler, J.
         year: 2015
         title: 'Consistent partial least squares path modeling'
         publisher: MIS Quarterly
