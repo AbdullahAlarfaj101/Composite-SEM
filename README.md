@@ -4,21 +4,29 @@ Composite-SEM is a comprehensive module for jamovi designed to estimate, analyze
 
 **Core Features**
 
-Advanced estimation techniques: Supports Partial Least Squares (PLS), Corrected PLS (PLSc) for latent variables, Generalized Structured Component Analysis (GSCA), and Maxvar.
+Advanced estimation techniques: Supports Partial Least Squares (PLS), Corrected PLS (PLSc) for latent variables, Generalized Structured Component Analysis (GSCA), and MAXVAR.
 
-Flexible measurement models: Easily define reflective (latent) and formative (composite) constructs.
+Permit two types of models: Easily define reflective (latent) and formative (composite) constructs.
 
-Comprehensive diagnostics: Produces model fit indices, exact fit (critical value 95% of SRMR, dG, and dL), confidence intervals via bootstrapping, and out-of-sample prediction measures.
+Advanced bootstrap options: By default, the user gets 500 samples, and this can be changed along with different interval types available (e.g., percentile, bias-corrected and basic).
 
-Model flexibility: Support for testing both types of models: measurement (outer) model and structural (inner) model in a very intutive way.
+Accounts for nonnormality: in "Model Estimation", you can select "Robust estimation," which allows you to appropriately estimate models with data that deviate from a normal distribution.
 
-Extended report: When structural (inner) model invloved, direct, indirect, and total effects are reported.
+Weight Models: You can can select between Mode B (default) and Mode A when using PLS.
+
+Comprehensive diagnostics: Produces model fit indices (CFI, TLI, SRMR, RMSEA), exact fit (critical value 95% of SRMR, dG, and dL), confidence intervals via bootstrapping, and out-of-sample prediction measures.
+
+Model flexibility: Testing the measurement (outer) model (such as CFA and CCA) and structural (inner) model in a very intutive way.
+
+Extended report: When structural (inner) model is specified, user automatically gets direct, indirect, and total effects.
 
 Missing data: Several options avaiable to deal with missing data including, listwise deletion, mean imputation, regression imputation, and K-nearest neighbours (KNN) imputation.
 
-Multigroup analysis (MGD): Perform difference tests across groups using differnt methods like permutation-based test .
+Multigroup analysis (MGD): Perform difference tests across groups using differnt methods like permutation-based test (among other types).
 
 PLS predcit (out-of-sample prediction): Compare PLS model performance against standard linear model (LM) benchmarks for predictive assessment.
+
+Plot the model: You can get a visual presentation of your model with a punch of options (e.g., abbreviation, showing stars for sig value, showing estimates on paths, type of layout, font size, and more!).
 
 -----------------------------------------------------------------------------------------------------------------
 
