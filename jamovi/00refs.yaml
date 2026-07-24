@@ -3,7 +3,7 @@
 refs:
     CompositeSEM:
         type: software
-        author: Al arfaj, A. A., & Alamer, A. A.
+        author: Al Arfaj, A. A., & Alamer, A. A.
         year: 2026
         title: 'Composite-SEM'
         publisher: '[Jamovi module]'
