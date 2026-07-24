@@ -6,7 +6,7 @@ refs:
         author: Al Arfaj, A. A., & Alamer, A. A.
         year: 2026
         title: 'Composite-SEM'
-        publisher: '[Jamovi module]'
+        publisher: '[Jamovi module]. Retrieved from https://github.com/AbdullahAlarfaj101/Composite-SEM'
         url: https://github.com/AbdullahAlarfaj101/Composite-SEM
 
     cSEM:
@@ -14,7 +14,7 @@ refs:
         author: Rademaker, M. E., & Schuberth, F.
         year: 2020
         title: 'cSEM: Composite-based structural equation modeling'
-        publisher: R package
+        publisher: '[R package]. Retrieved from https://floschuberth.github.io/cSEM/'
         url: https://floschuberth.github.io/cSEM/
 
     henselerSchuberth2021:
