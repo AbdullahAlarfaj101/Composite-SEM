@@ -1,4 +1,11 @@
-# This file is a generated template, your changes will not be overwritten
+# =================================================================
+# Helper: Safe Definition of Null-Coalescing Operator
+# =================================================================
+if (!exists("%||%")) {
+  `%||%` <- function(a, b) {
+    if (is.null(a) || length(a) == 0 || (is.character(a) && length(a) == 1 && !nzchar(a))) b else a
+  }
+}
 
 #' @rdname jamovi
 #' @export
@@ -77,11 +84,11 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                        used_labels <- all_labels
                                      
                                      list(
-                                       all_labels       = all_labels,
+                                       all_labels        = all_labels,
                                        endogenous_labels = endogenous_labels,
-                                       used_labels      = used_labels,
-                                       structural_input = paste(structural_parts, collapse = "\n"),
-                                       is_auto_mode     = is_auto_mode
+                                       used_labels       = used_labels,
+                                       structural_input  = paste(structural_parts, collapse = "\n"),
+                                       is_auto_mode      = is_auto_mode
                                      )
                                    },
                                    
@@ -99,7 +106,7 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                      }
                                      
                                      for (item in self$options$latent) {
-                                       if (length(item$vars) > 0 && nzchar(item$label) && is_used(item$label)) {
+                                       if (length(item$vars) > 0 && nzchar(item$label %||% "") && is_used(item$label)) {
                                          summaryTable$addRow(rowKey=item$label, values=list(
                                            type       = 'Latent (Reflective)',
                                            construct  = item$label,
@@ -109,7 +116,7 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                      }
                                      
                                      for (item in self$options$composite) {
-                                       if (length(item$vars) > 0 && nzchar(item$label) && is_used(item$label)) {
+                                       if (length(item$vars) > 0 && nzchar(item$label %||% "") && is_used(item$label)) {
                                          summaryTable$addRow(rowKey=item$label, values=list(
                                            type       = 'Composite (Formative)',
                                            construct  = item$label,
@@ -134,10 +141,6 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                        label %in% si$used_labels
                                      }
                                      
-                                     clean_list <- function(l) {
-                                       l[sapply(l, function(x) !is.null(x) && !is.na(x) && !is.nan(x))]
-                                     }
-                                     
                                      measurement_parts <- list()
                                      hasCommonFactors  <- FALSE
                                      active_constructs <- c()
@@ -146,7 +149,7 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                      
                                      # A) Latent Variables
                                      for (item in self$options$latent) {
-                                       if (length(item$vars) > 0 && nzchar(item$label)) {
+                                       if (length(item$vars) > 0 && nzchar(item$label %||% "")) {
                                          if (is_used(item$label)) {
                                            safe_label <- jmvcore::composeTerm(item$label)
                                            safe_vars  <- sapply(item$vars, jmvcore::composeTerm)
@@ -154,7 +157,7 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                                                   paste0(safe_label, " =~ ", paste(safe_vars, collapse=" + ")))
                                            hasCommonFactors  <- TRUE
                                            active_constructs <- c(active_constructs, item$label)
-                                           cleaning_vars      <- c(cleaning_vars, item$vars)
+                                           cleaning_vars     <- c(cleaning_vars, item$vars)
                                          } else {
                                            ignored_vars <- c(ignored_vars, item$label)
                                          }
@@ -163,14 +166,14 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                      
                                      # B) Composite Variables
                                      for (item in self$options$composite) {
-                                       if (length(item$vars) > 0 && nzchar(item$label)) {
+                                       if (length(item$vars) > 0 && nzchar(item$label %||% "")) {
                                          if (is_used(item$label)) {
                                            safe_label <- jmvcore::composeTerm(item$label)
                                            safe_vars  <- sapply(item$vars, jmvcore::composeTerm)
                                            measurement_parts <- c(measurement_parts,
                                                                   paste0(safe_label, " <~ ", paste(safe_vars, collapse=" + ")))
                                            active_constructs <- c(active_constructs, item$label)
-                                           cleaning_vars      <- c(cleaning_vars, item$vars)
+                                           cleaning_vars     <- c(cleaning_vars, item$vars)
                                          } else {
                                            ignored_vars <- c(ignored_vars, item$label)
                                          }
@@ -219,7 +222,7 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                      # Identify if we have any active composite constructs
                                      hasComposites <- FALSE
                                      for (item in self$options$composite) {
-                                       if (length(item$vars) > 0 && nzchar(item$label) && is_used(item$label)) {
+                                       if (length(item$vars) > 0 && nzchar(item$label %||% "") && is_used(item$label)) {
                                          hasComposites <- TRUE
                                          break
                                        }
@@ -231,8 +234,6 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                        summaryTable$setNote("maxvar_error", "MAXVAR only works with disattenuation if all constructs are common factors (latent variables). Please enable 'No disattenuation' or choose another estimation method.")
                                        return()
                                      }
-                                     
-                                     
                                      
                                      if (length(measurement_parts) == 0) {
                                        infoTable$addRow(rowKey="msg", values=list(property="Message", value="No constructs defined or matched."))
@@ -324,8 +325,6 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                      summs    <- list()
                                      is_multi <- FALSE
                                      
-                                     .run_env <- environment()
-                                     
                                      # --- Run cSEM ---
                                      tryCatch({
                                        
@@ -374,14 +373,14 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                        boot_ci_type <- self$options$bootCI
                                        summ <- cSEM::summarize(out, .ci = boot_ci_type)
                                        
-                                       .run_env$is_multi <- inherits(out, "cSEMResults_multi")
-                                       if (.run_env$is_multi) {
-                                         .run_env$groups <- names(out)
-                                         .run_env$summs  <- summ
+                                       is_multi <- inherits(out, "cSEMResults_multi")
+                                       if (is_multi) {
+                                         groups <- names(out)
+                                         summs  <- summ
                                        } else {
-                                         .run_env$groups <- c("")
-                                         .run_env$summs  <- list(summ)
-                                         names(.run_env$summs) <- ""
+                                         groups <- c("")
+                                         summs  <- list(summ)
+                                         names(summs) <- ""
                                        }
                                        
                                        has_assess <- TRUE
@@ -508,7 +507,7 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                            for (m_name in names(metrics)) {
                                              val <- metrics[[m_name]]
                                              if (!is.null(val) && !is.nan(val) && length(val) > 0) {
-                                               fitTable$addRow(rowKey=paste0(g, "_", m_name), values=list(
+                                               fitTable$addRow(rowKey=paste0(g, "__", m_name), values=list(
                                                  group = g,
                                                  metric = m_name,
                                                  value = as.numeric(val)
@@ -748,7 +747,7 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                                }
                                              }
                                              
-                                             vcvTable$addRow(rowKey=paste0(g, "_cor_", c1, "_", c2), values=clean_list(list(
+                                             vcvTable$addRow(rowKey=paste0(g, "_cor_", c1, "_", c2), values=list(
                                                group = g,
                                                c1 = c1,
                                                c2 = c2,
@@ -758,7 +757,7 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                                p = as.numeric(p_val),
                                                cil = as.numeric(cil),
                                                ciu = as.numeric(ciu)
-                                             )))
+                                             ))
                                            }
                                          }
                                        }
@@ -909,11 +908,18 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                                      }
                                                    }
                                                    if (valid_path) {
-                                                     se <- sd(boot_vals)
-                                                     cil <- quantile(boot_vals, probs = 0.025, na.rm = TRUE)
-                                                     ciu <- quantile(boot_vals, probs = 0.975, na.rm = TRUE)
-                                                     t_val <- estimate / se
-                                                     p_val <- 2 * pnorm(abs(t_val), lower.tail = FALSE)
+                                                     se <- stats::sd(boot_vals)
+                                                     cil <- stats::quantile(boot_vals, probs = 0.025, na.rm = TRUE)
+                                                     ciu <- stats::quantile(boot_vals, probs = 0.975, na.rm = TRUE)
+                                                     
+                                                     # SE 除零保护
+                                                     if (!is.na(se) && se > 1e-8) {
+                                                       t_val <- estimate / se
+                                                       p_val <- 2 * stats::pnorm(abs(t_val), lower.tail = FALSE)
+                                                     } else {
+                                                       t_val <- NA
+                                                       p_val <- NA
+                                                     }
                                                    }
                                                  }
                                                }
@@ -1009,7 +1015,6 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                          folds <- self$options$predictFolds
                                          if (is.null(folds)) folds <- 10
                                          
-                                         runif(1)
                                          pred_res <- tryCatch({
                                            cSEM::predict(.object=out, .benchmark="lm", .cv_folds=folds, .r=1, .seed=123)
                                          }, error=function(e) {
@@ -1059,11 +1064,18 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                            bootstrapSamples else 50
                                          
                                          testMGD_patched <- cSEM::testMGD
+                                         mgd_env <- environment(testMGD_patched)
                                          body_str <- deparse(body(testMGD_patched))
                                          target_idx <- grep("n <- nrow\\(path_resamples\\)", body_str)
-                                         if (length(target_idx) > 0) {
+                                         
+                                         # 安全防护机制补丁
+                                         if (length(target_idx) == 1) {
                                            body_str[target_idx] <- "n <- if (!is.null(path_resamples)) nrow(path_resamples) else if (!is.null(loading_resamples)) nrow(loading_resamples) else nrow(weight_resamples)"
-                                           body(testMGD_patched) <- parse(text = paste(body_str, collapse = "\n"))
+                                           patched_body <- tryCatch(parse(text = paste(body_str, collapse = "\n")), error = function(e) NULL)
+                                           if (!is.null(patched_body)) {
+                                             body(testMGD_patched) <- patched_body
+                                             environment(testMGD_patched) <- mgd_env
+                                           }
                                          }
                                          
                                          mga_methods <- character(0)
@@ -1079,7 +1091,7 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                            tryCatch({
                                              mga_res <- testMGD_patched(.object=out, .R_permutation=perm_R, .approach_mgd=mga_methods)
                                            }, error=function(e) {
-                                             mga_error <<- e$message
+                                             mga_error <- e$message  # 改为局部标准赋值
                                            })
                                          }
                                          
@@ -1241,14 +1253,14 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                        
                                        latent_names <- character(0)
                                        for (item in self$options$latent) {
-                                         if (length(item$vars) > 0 && nzchar(item$label) && is_used(item$label)) {
+                                         if (length(item$vars) > 0 && nzchar(item$label %||% "") && is_used(item$label)) {
                                            latent_names <- c(latent_names, item$label)
                                          }
                                        }
                                        
                                        composite_names <- character(0)
                                        for (item in self$options$composite) {
-                                         if (length(item$vars) > 0 && nzchar(item$label) && is_used(item$label)) {
+                                         if (length(item$vars) > 0 && nzchar(item$label %||% "") && is_used(item$label)) {
                                            composite_names <- c(composite_names, item$label)
                                          }
                                        }
@@ -1267,19 +1279,7 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                          }
                                          
                                          model_lavaan <- gsub("<~", "=~", model, fixed = TRUE)
-                                         
-                                         # Collect PLS modes for composite constructs
-                                         pls_modes <- list()
                                          user_modes <- self$options$modes
-                                         if (!is.null(user_modes) && length(user_modes) > 0) {
-                                           for (m_item in user_modes) {
-                                             c_name <- m_item$construct
-                                             c_mode <- m_item$mode
-                                             if (!is.null(c_name) && c_name != "" && !is.null(c_mode) && c_mode != "") {
-                                               pls_modes[[c_name]] <- c_mode
-                                             }
-                                           }
-                                         }
                                          
                                          list(
                                            model_lavaan    = model_lavaan,
@@ -1289,7 +1289,7 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                            groups          = groups,
                                            is_multi        = is_multi,
                                            group_data      = group_data,
-                                           pls_modes       = pls_modes
+                                           user_modes      = user_modes
                                          )
                                        }, error = function(e) {
                                          NULL
@@ -1309,6 +1309,9 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                      }
                                    },
                                    .plotPathDiagram = function(image, ggtheme, theme, ...) {
+                                     old_par <- graphics::par(no.readonly = TRUE)
+                                     on.exit(graphics::par(old_par))
+                                     
                                      plot_state <- image$state
                                      if (is.null(plot_state))
                                        return(FALSE)
@@ -1338,8 +1341,25 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                        groups          <- plot_state$groups
                                        is_multi        <- plot_state$is_multi
                                        group_data      <- plot_state$group_data
-                                       pls_modes       <- plot_state$pls_modes %||% list()
+                                       user_modes      <- plot_state$user_modes %||% list()
                                        all_construct_names <- c(latent_names, composite_names)
+                                       
+                                       # 精确匹配辅助函数
+                                       get_construct_mode <- function(target_name) {
+                                         if (length(user_modes) == 0) return(NULL)
+                                         target_clean <- tolower(trimws(target_name))
+                                         
+                                         for (m_item in user_modes) {
+                                           c_name <- m_item$construct %||% ""
+                                           c_mode <- m_item$mode %||% ""
+                                           if (nzchar(c_name) && nzchar(c_mode)) {
+                                             if (tolower(trimws(c_name)) == target_clean) {
+                                               return(c_mode)
+                                             }
+                                           }
+                                         }
+                                         return(NULL)
+                                       }
                                        
                                        fit_lavaan <- tryCatch(
                                          lavaan::sem(model_lavaan, data = plot_data, do.fit = FALSE),
@@ -1388,28 +1408,42 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                                    p_val <- gd$loading_estimates$p_value[idx[1]]
                                                }
                                              } else if (lhs %in% composite_names) {
-                                               # Check if this composite is specified as Mode A
-                                               c_mode <- pls_modes[[lhs]]
-                                               is_mode_a <- !is.null(c_mode) && (toupper(trimws(as.character(c_mode))) %in% c("MODEA", "MODE_A", "MODE A", "A"))
+                                               c_mode <- get_construct_mode(lhs)
+                                               # 判断是否显式指定为 Mode B，未指定或指定 Mode A 则默认按 Mode A (反映性) 绘制
+                                               is_mode_b <- !is.null(c_mode) && (toupper(trimws(as.character(c_mode))) %in% c("MODEB", "MODE_B", "MODE B", "B"))
+                                               is_mode_a <- !is_mode_b
                                                
-                                               # Search in weight estimates first, then loading estimates
-                                               idx <- which(gd$weight_estimates$Name == paste0(lhs, " <~ ", rhs) | gd$weight_estimates$Name == paste0(lhs, " =~ ", rhs))
-                                               if (length(idx) > 0) {
-                                                 est_val <- gd$weight_estimates$Estimate[idx[1]]
-                                                 if ("p_value" %in% names(gd$weight_estimates))
-                                                   p_val <- gd$weight_estimates$p_value[idx[1]]
-                                               } else {
+                                               if (is_mode_a) {
+                                                 # Mode A (反映性)：提取 Outer Loading (λ)，保持 构念 -> 指标
                                                  idx_load <- which(gd$loading_estimates$Name == paste0(lhs, " <~ ", rhs) | gd$loading_estimates$Name == paste0(lhs, " =~ ", rhs))
                                                  if (length(idx_load) > 0) {
                                                    est_val <- gd$loading_estimates$Estimate[idx_load[1]]
                                                    if ("p_value" %in% names(gd$loading_estimates))
                                                      p_val <- gd$loading_estimates$p_value[idx_load[1]]
+                                                 } else {
+                                                   idx <- which(gd$weight_estimates$Name == paste0(lhs, " <~ ", rhs) | gd$weight_estimates$Name == paste0(lhs, " =~ ", rhs))
+                                                   if (length(idx) > 0) {
+                                                     est_val <- gd$weight_estimates$Estimate[idx[1]]
+                                                     if ("p_value" %in% names(gd$weight_estimates))
+                                                       p_val <- gd$weight_estimates$p_value[idx[1]]
+                                                   }
                                                  }
-                                               }
-                                               
-                                               # If Mode B (default), render inward arrows (indicator -> composite)
-                                               # If Mode A, keep outward arrows (composite -> indicator)
-                                               if (!is_mode_a) {
+                                               } else {
+                                                 # Mode B (形成性)：提取 Outer Weight (w)，反转为 指标 -> 构念
+                                                 idx <- which(gd$weight_estimates$Name == paste0(lhs, " <~ ", rhs) | gd$weight_estimates$Name == paste0(lhs, " =~ ", rhs))
+                                                 if (length(idx) > 0) {
+                                                   est_val <- gd$weight_estimates$Estimate[idx[1]]
+                                                   if ("p_value" %in% names(gd$weight_estimates))
+                                                     p_val <- gd$weight_estimates$p_value[idx[1]]
+                                                 } else {
+                                                   idx_load <- which(gd$loading_estimates$Name == paste0(lhs, " <~ ", rhs) | gd$loading_estimates$Name == paste0(lhs, " =~ ", rhs))
+                                                   if (length(idx_load) > 0) {
+                                                     est_val <- gd$loading_estimates$Estimate[idx_load[1]]
+                                                     if ("p_value" %in% names(gd$loading_estimates))
+                                                       p_val <- gd$loading_estimates$p_value[idx_load[1]]
+                                                   }
+                                                 }
+                                                 
                                                  pars$lhs[i] <- rhs
                                                  pars$rhs[i] <- lhs
                                                }
@@ -1499,15 +1533,15 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                        n_plots <- length(plots_list)
                                        if (is_multi && n_plots > 1) {
                                          if (n_plots == 2) {
-                                           par(mfrow = c(1, 2))
+                                           graphics::par(mfrow = c(1, 2))
                                          } else if (n_plots <= 4) {
-                                           par(mfrow = c(2, 2))
+                                           graphics::par(mfrow = c(2, 2))
                                          } else {
-                                           par(mfrow = c(ceiling(n_plots / 3), 3))
+                                           graphics::par(mfrow = c(ceiling(n_plots / 3), 3))
                                          }
                                          for (g in names(plots_list)) {
                                            plot(plots_list[[g]])
-                                           title(g, line = 0.5)
+                                           graphics::title(g, line = 0.5)
                                          }
                                        } else {
                                          plot(plots_list[[1]])
@@ -1520,6 +1554,3 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                    }
                                  )
 )
-
-# Null-coalescing operator
-`%||%` <- function(a, b) if (!is.null(a) && !identical(a, "")) a else b
