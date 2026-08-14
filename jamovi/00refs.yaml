@@ -17,31 +17,12 @@ refs:
         publisher: '[R package]. Retrieved from https://floschuberth.github.io/cSEM/'
         url: https://floschuberth.github.io/cSEM/
 
-    henselerSchuberth2021:
+    Henseler2021:
         type: book
         author: Henseler, J.
         year: 2021
         title: 'Composite-based structural equation modeling: Analyzing latent and emergent variables'
         publisher: The Guilford Press
 
-    schuberthHenselerDijkstra2018:
-        type: article
-        author: Schuberth, F., Henseler, J., & Dijkstra, T. K.
-        year: 2018
-        title: 'Confirmatory composite analysis'
-        publisher: Frontiers in Psychology
-        volume: 9
-        pages: 2541
-        doi: 10.3389/fpsyg.2018.02541
-
-    dijkstraHenseler2015:
-        type: article
-        author: Dijkstra, T. K., & Henseler, J.
-        year: 2015
-        title: 'Consistent partial least squares path modeling'
-        publisher: MIS Quarterly
-        volume: 39
-        number: 2
-        pages: 297-316
 
 ...
