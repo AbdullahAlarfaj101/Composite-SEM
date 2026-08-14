@@ -314,6 +314,28 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                        }
                                      }
                                      
+                                     # =================================================================
+                                     # 🔧【类型强转修补】：保证输入 cSEM 的所有指标变量均为 numeric
+                                     # 兼容 Jamovi 中将变量设为 Ordinal (Factor) 的情况，避免 HTMT / 矩阵运算抛错
+                                     # =================================================================
+                                     if (length(cleaning_vars) > 0) {
+                                       for (v in cleaning_vars) {
+                                         if (v %in% names(working_data)) {
+                                           if (is.factor(working_data[[v]]) || is.ordered(working_data[[v]])) {
+                                             num_v <- suppressWarnings(as.numeric(as.character(working_data[[v]])))
+                                             if (any(is.na(num_v) & !is.na(working_data[[v]]))) {
+                                               working_data[[v]] <- as.numeric(working_data[[v]])
+                                             } else {
+                                               working_data[[v]] <- num_v
+                                             }
+                                           } else {
+                                             working_data[[v]] <- as.numeric(working_data[[v]])
+                                           }
+                                         }
+                                       }
+                                     }
+                                     # =================================================================
+                                     
                                      # --- Setup ---
                                      multGroupVar     <- self$options$multg
                                      estimationModel  <- self$options$alt
@@ -324,6 +346,19 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                      groups   <- character(0)
                                      summs    <- list()
                                      is_multi <- FALSE
+                                     
+                                     # =================================================================
+                                     # 🔥【核心性能增强】：配置全局多核 CPU 并行计算框架
+                                     # =================================================================
+                                     n_cores <- parallel::detectCores(logical = TRUE)
+                                     if (is.na(n_cores) || n_cores < 1) n_cores <- 1
+                                     
+                                     if (n_cores > 1) {
+                                       # 开启多进程并行后台，吃满所有核心
+                                       future::plan(future::multisession, workers = n_cores)
+                                       # 计算完成后或中途报错时，自动收回线程与资源，防止卡死系统
+                                       on.exit(future::plan(future::sequential), add = TRUE)
+                                     }
                                      
                                      # --- Run cSEM ---
                                      tryCatch({
@@ -359,7 +394,11 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                        
                                        if (isTRUE(useBootstrap)) {
                                          csem_args$.resample_method <- "bootstrap"
-                                         csem_args$.R <- bootstrapSamples
+                                         csem_args$.R               <- bootstrapSamples
+                                         if (n_cores > 1) {
+                                           # 指示 cSEM 显式启用多进程 Bootstrap
+                                           csem_args$.eval_plan    <- "multisession"
+                                         }
                                        }
                                        
                                        if (isTRUE(self$options$robustEst)) {
@@ -540,7 +579,7 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                                  dec_val <- if (m %in% rownames(o$Decision)) o$Decision[m, "95%"] else NA
                                                  decision <- if (is.na(dec_val)) "" else (if (isTRUE(dec_val)) "Do not reject" else "Reject")
                                                  
-                                                 exactFitTable$addRow(rowKey=paste0(g, "_", m), values=list(
+                                                 exactFitTable$addRow(rowKey=paste0(g, "__", m), values=list(
                                                    group = g,
                                                    measure = m,
                                                    stat = as.numeric(stat),
