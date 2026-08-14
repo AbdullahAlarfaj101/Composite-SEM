@@ -8,7 +8,7 @@ jrs:   '1.1'
 refs:
     - CompositeSEM
     - cSEM
-    - henselerSchuberth2021
+    - Henseler2021
 
 items:
     - name: constructsTable
