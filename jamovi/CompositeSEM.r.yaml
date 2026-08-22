@@ -1,6 +1,6 @@
 ---
 name:  CompositeSEM
-title: CompositeSEM
+title: Composite-SEM
 jrs:   '1.1'
 
 # NEW in 1.5: Attach the module's own citation (defined in jamovi/refs.yaml)
