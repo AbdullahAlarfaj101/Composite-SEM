@@ -87,6 +87,11 @@ children:
             name: multg
             maxItemCount: 1
             isTarget: true
+            # NEW in 1.7: Selecting or clearing the grouping variable now
+            # enables/disables the Multi-Group Analysis test selectors, so the
+            # MGA options can only be set when a grouping variable is present.
+            events:
+              change: ./events::onChange_multg
   - type: LayoutBox
     margin: large
     children:
@@ -157,6 +162,85 @@ children:
           - type: CheckBox
             name: disattenuate
             enable: (alt:PLS || alt:MAXVAR)
+  # NEW in 1.7: Higher-Order Constructs (HOC) panel. The supplier is fed with
+  # the lower-order constructs (LOCs) defined in the measurement model above;
+  # each HOC entry names the higher-order construct, chooses its measurement
+  # mode (Latent = reflective '=~', Composite = formative '<~') and receives
+  # the LOCs that serve as its components. The estimation approach selector
+  # maps onto cSEM's .approach_2ndorder argument.
+  - type: CollapseBox
+    label: Higher-Order Constructs (HOC)
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: LayoutBox
+        margin: large
+        stretchFactor: 1
+        children:
+          - type: Label
+            label: "Note: It is recommended to assess lower-order constructs validity and/or"
+            stretchFactor: 1
+            margin: small
+          - type: Label
+            label: "reliability measures before specifying the higher-order construct."
+            stretchFactor: 1
+            margin: small
+          - type: Label
+            label: ""
+            stretchFactor: 1
+            margin: small
+          - type: LayoutBox
+            style: inline
+            children:
+              - type: ComboBox
+                name: hocApproach
+          - type: Supplier
+            label: Lower-Order Constructs (LOC)
+            name: hocSupplier
+            format: variable
+            persistentItems: true
+            stretchFactor: 1
+            events:
+              update: ./events::onUpdate_hocSupplier
+              change: ./events::onChange_hocSupplier
+            children:
+              - type: TargetLayoutBox
+                label: Higher-Order Constructs (HOC)
+                children:
+                  - type: ListBox
+                    name: hoc
+                    height: large
+                    addButton: Add Higher-Order Construct
+                    events:
+                      listItemAdded: './events::onChange_items_changed'
+                      listItemRemoved: './events::onChange_items_changed'
+                    template:
+                      type: LayoutBox
+                      margin: normal
+                      children:
+                        - type: TextBox
+                          name: label
+                          events:
+                            change: './events::onChange_constructName'
+                          valueKey:
+                            - label
+                          borderless: true
+                          stretchFactor: 1
+                          margin: normal
+                        - type: ComboBox
+                          name: type
+                          valueKey:
+                            - type
+                        - type: VariablesListBox
+                          name: components
+                          events:
+                            listItemAdded: './events::onChange_items_changed'
+                            listItemRemoved: './events::onChange_items_changed'
+                          valueKey:
+                            - components
+                          isTarget: true
+                          height: auto
+                          ghostText: drag LOC constructs here
   - type: CollapseBox
     label: Weights Modes
     collapsed: true
@@ -276,7 +360,7 @@ children:
                     isTarget: true
                     valueFilter: unique
                     fullRowSelect: true
-                    height: large
+                    height: normal
                     ghostText: drag constructs here
                     events:
                       change: ./events::onChange_roleAssignments
@@ -290,7 +374,7 @@ children:
                     isTarget: true
                     valueFilter: unique
                     fullRowSelect: true
-                    height: large
+                    height: normal
                     ghostText: drag constructs here
                     events:
                       change: ./events::onChange_roleAssignments
@@ -354,6 +438,51 @@ children:
             format: number
             enable: (LinearBench)
 
+  # NEW in 1.7: Moderation Analysis panel. The three construct selectors are
+  # repopulated by jamovi/js/events.js whenever the model changes: the
+  # dependent list holds the endogenous constructs, the independent list the
+  # predictors of the selected dependent construct, and the moderator list
+  # those predictors minus the selected independent construct. This guarantees
+  # that only interactions that are compatible with the specified structural
+  # model can be requested.
+  - type: CollapseBox
+    label: Moderation Analysis
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: LayoutBox
+        margin: large
+        children:
+          - type: CheckBox
+            name: moderationEnabled
+            events:
+              change: './events::onChange_moderationEnabled'
+          - type: ComboBox
+            name: modDependent
+            enable: (moderationEnabled)
+            events:
+              change: './events::onChange_modDependent'
+          - type: ComboBox
+            name: modIndependent
+            enable: (moderationEnabled)
+            events:
+              change: './events::onChange_modIndependent'
+          - type: ComboBox
+            name: modModerator
+            enable: (moderationEnabled)
+          - type: ComboBox
+            name: modLevels
+            enable: (moderationEnabled)
+          - type: CheckBox
+            name: showSimpleEffectsTable
+            enable: (moderationEnabled)
+          - type: CheckBox
+            name: showSimpleEffectsPlot
+            enable: (moderationEnabled)
+          - type: CheckBox
+            name: showFloodlightPlot
+            enable: (moderationEnabled)
+
   - type: CollapseBox
     label: Plot
     collapsed: true
@@ -391,6 +520,11 @@ children:
             enable: (showPlot)
           - type: ComboBox
             name: plotRotation
+            enable: (showPlot)
+          # NEW in 1.7: Controls the vertical gap between indicator nodes in
+          # the SEM diagram (see .plotPathDiagram indicator stacking).
+          - type: ComboBox
+            name: plotIndicatorSpacing
             enable: (showPlot)
 
 compilerMode: tame
