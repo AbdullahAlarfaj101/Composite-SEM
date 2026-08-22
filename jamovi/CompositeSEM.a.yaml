@@ -2,7 +2,7 @@
 name: CompositeSEM
 title: CompositeSEM
 menuGroup: CompositeSEM
-version: '1.5.0'
+version: '1.7.0'
 jas: '1.2'
 arbitraryCode: false
 
@@ -91,6 +91,60 @@ options:
       A list containing named lists that define the `label` of the composite variables and
       the `vars` that belong to that composite.
       
+########################################################################################
+
+# NEW in 1.7: Higher-Order Constructs (HOC). Selects the disjoint two-stage
+# procedure used by cSEM to estimate hierarchical component models. The value
+# is forwarded to cSEM::csem() through its .approach_2ndorder argument:
+# "2stage" first estimates the lower-order model and then feeds the resulting
+# construct scores into the second-stage model, whereas "mixed" estimates the
+# repeated-indicator model and only re-estimates the second stage.
+- name: hocApproach
+  title: Estimation Approach
+  type: List
+  options:
+  - title: Two-Stage (2stage)
+    name: 2stage
+  - title: Mixed Approach (mixed)
+    name: mixed
+  default: 2stage
+  description:
+    R: >
+      The disjoint two-stage procedure used to estimate higher-order constructs. `2stage` estimates the
+      lower-order model first and feeds the resulting construct scores into the second stage, `mixed`
+      estimates the repeated-indicator model and re-estimates the second stage only. Forwarded to
+      `cSEM::csem()` as `.approach_2ndorder`.
+
+# NEW in 1.7: Higher-order construct definitions. An array of
+# {label, type, components} groups in which each entry declares one
+# higher-order construct, its measurement mode (reflective/latent "=~" or
+# composite/formative "<~") and the lower-order constructs (LOCs) that act as
+# its components. The list is kept in sync with the defined latent/composite
+# constructs by jamovi/js/events.js and is translated into the second-order
+# part of the cSEM model syntax by .buildStructural() / .run().
+- name: hoc
+  type: Array
+  default: []
+  template:
+    type: Group
+    elements:
+    - name: label
+      type: String
+    - name: type
+      type: List
+      options:
+      - title: Latent
+        name: reflective
+      - title: Composite
+        name: composite
+      default: reflective
+    - name: components
+      type: Variables
+  description:
+    R: >
+      A list containing named lists that define higher-order constructs (`label`), their measurement type (`type`),
+      and the lower-order sub-constructs (`components`) assigned to them.
+
 ########################################################################################
 
 - name: multg
@@ -276,10 +330,12 @@ options:
 # semPlot::semPaths(); the options below control whether the plot is shown,
 # node-label abbreviation, layout algorithm, orientation, estimate labels,
 # indicator residuals, font size and significance stars.
+# UPDATED in 1.7: The diagram is now shown by default, because the path
+# diagram has become one of the module's primary outputs.
 - name: showPlot
   title: Plot the model
   type: Bool
-  default: false
+  default: true
 
 - name: abbreviate
   title: Abbreviate node labels
@@ -303,19 +359,45 @@ options:
     title: Spring-embedded (Force-directed)
   default: tree
 
+# UPDATED in 1.7: The diagram orientation values are now self-describing
+# identifiers ("left_right", "top_down", "bottom_up", "right_left") instead of
+# the numeric semPlot rotation codes ('1'-'4') used up to 1.5. The mapping to
+# the numeric semPaths() 'rotation' argument is performed in
+# .plotPathDiagram(), which still accepts the legacy numeric values so that
+# analyses saved with earlier versions keep rendering correctly.
 - name: plotRotation
   title: Direction
   type: List
   options:
-  - name: '2'
-    title: Left-to-right / Manifests at left
-  - name: '1'
+  - name: left_right
+    title: Left-to-right / Manifests at left (Default)
+  - name: top_down
     title: Top-down (tree) / Manifests at top
-  - name: '3'
+  - name: bottom_up
     title: Bottom-up / Manifests at bottom
-  - name: '4'
+  - name: right_left
     title: Right-to-left / Manifests at right
-  default: '2'
+  default: left_right
+
+# NEW in 1.7: Vertical spacing of the indicator (manifest) nodes in the path
+# diagram. The chosen level scales the per-column stacking step applied by
+# .plotPathDiagram(), which regroups indicators under their parent construct
+# so that blocks no longer interleave or overlap in densely measured models.
+- name: plotIndicatorSpacing
+  title: Vertical Spacing Gap
+  type: List
+  options:
+  - name: compact
+    title: Compact
+  - name: normal
+    title: Normal
+  - name: large
+    title: Large
+  default: normal
+  description:
+    R: >
+      Vertical spacing between the indicator nodes of the path diagram. Scales the per-column stacking
+      step so that indicator blocks stay readable in densely measured models.
 
 - name: showEstimates
   title: Show estimates on paths
@@ -343,5 +425,107 @@ options:
   title: Show significance stars (* p < .05, ** p < .01, *** p < .001)
   type: Bool
   default: true
+
+########################################################################################
+
+# NEW in 1.7: Moderation (interaction) analysis. When enabled, the product
+# term X.M is added automatically to the structural equation of the selected
+# dependent construct and the conditional (simple) effect of X on Y is probed
+# at several values of the moderator M. The three construct selectors are
+# populated dynamically by jamovi/js/events.js: the dependent list contains
+# only endogenous constructs, the independent list only the predictors of the
+# selected dependent construct, and the moderator list those predictors minus
+# the selected independent construct.
+- name: moderationEnabled
+  title: Enable Moderation Analysis
+  type: Bool
+  default: false
+  description:
+    R: >
+      Whether a moderation (interaction) analysis is performed. When `TRUE`, the product term
+      `modIndependent.modModerator` is added automatically to the structural equation of
+      `modDependent` and the conditional effect is probed at the levels given by `modLevels`.
+
+# NEW in 1.7: Dependent construct (Y) of the moderated relationship.
+- name: modDependent
+  title: Dependent Construct
+  type: String
+  default: ""
+  description:
+    R: >
+      Name of the endogenous construct that acts as the dependent variable (Y) of the moderated
+      relationship.
+
+# NEW in 1.7: Independent construct (X) whose effect on Y is moderated.
+- name: modIndependent
+  title: Independent Construct
+  type: String
+  default: ""
+  description:
+    R: >
+      Name of the construct whose effect on `modDependent` is moderated (X).
+
+# NEW in 1.7: Moderator construct (M) that conditions the X -> Y effect.
+- name: modModerator
+  title: Moderator Construct
+  type: String
+  default: ""
+  description:
+    R: >
+      Name of the construct that moderates the effect of `modIndependent` on `modDependent` (M).
+
+# NEW in 1.7: Probing levels at which the conditional effect of X on Y is
+# evaluated. Because cSEM construct scores are standardised, the standard
+# deviation levels correspond to z = -1, 0, +1 and the percentile levels to
+# the z-scores of the 16th, 50th and 84th percentile.
+- name: modLevels
+  title: Moderator Probing Levels
+  type: List
+  options:
+  - name: sd
+    title: Standard Deviations (-1 SD, Mean, +1 SD)
+  - name: percentile
+    title: Percentiles (16th, 50th, 84th)
+  default: sd
+  description:
+    R: >
+      Values of the moderator at which the conditional effect is evaluated. Construct scores are
+      standardised, so `sd` probes at z = -1, 0 and +1 and `percentile` at the z-scores of the 16th,
+      50th and 84th percentile.
+
+# NEW in 1.7: Simple effects (spotlight) table reporting the conditional
+# slope, its standard error, t value, p value and 95% confidence interval at
+# each probing level of the moderator.
+- name: showSimpleEffectsTable
+  title: Simple Effects Table
+  type: Bool
+  default: true
+  description:
+    R: >
+      Whether the simple effects (spotlight) table is reported, giving the conditional slope, its
+      standard error, t value, p value and 95% confidence interval at each probing level.
+
+# NEW in 1.7: Simple slopes plot showing the predicted value of Y as a
+# function of X at each probing level of the moderator.
+- name: showSimpleEffectsPlot
+  title: Simple Effects Slope Plot
+  type: Bool
+  default: false
+  description:
+    R: >
+      Whether the simple slopes plot is produced, showing one predicted regression line of Y on X per
+      probing level of the moderator.
+
+# NEW in 1.7: Floodlight (Johnson-Neyman) plot showing the conditional effect
+# of X on Y across the full observed range of the moderator, together with its
+# 95% confidence band, so the region of significance can be read directly.
+- name: showFloodlightPlot
+  title: Floodlight (Johnson-Neyman) Plot
+  type: Bool
+  default: false
+  description:
+    R: >
+      Whether the floodlight (Johnson-Neyman) plot is produced, showing the conditional effect of X on
+      Y across the range of the moderator together with its 95% confidence band.
 
 ...
