@@ -11,9 +11,14 @@ refs:
     - Henseler2021
 
 items:
+    # NEW in 1.7: In addition to the formal References entry above, the
+    # required citation is now shown directly underneath the first output
+    # table, so it stays visible even when the References section is collapsed.
     - name: constructsTable
       title: 'Model Structure Summary'
       type: Table
+      notes:
+        citation: 'If you use Composite-SEM you must cite it as follows: Al Arfaj, A. A., & Alamer, A. A. (2026). Composite-SEM: A Jamovi Module (Software). https://github.com/AbdullahAlarfaj101/Composite-SEM'
       columns:
         - name: type
           title: 'Construct Type'
@@ -230,6 +235,69 @@ items:
           type: text
         - name: indicator
           title: 'Indicator'
+          type: text
+        - name: estimate
+          title: 'Std estimate'
+          type: number
+        - name: se
+          title: 'SE'
+          type: number
+          visible: (useBootstrap)
+        - name: cil
+          title: 'Lower'
+          type: number
+          superTitle: '95% Confidence Interval'
+          visible: (useBootstrap)
+        - name: ciu
+          title: 'Upper'
+          type: number
+          superTitle: '95% Confidence Interval'
+          visible: (useBootstrap)
+        - name: p
+          title: 'p-value'
+          type: number
+          format: zto,pvalue
+          visible: (useBootstrap)
+        - name: t
+          title: 't'
+          type: number
+          visible: (useBootstrap)
+
+    # NEW in 1.7: Dedicated outer model table for higher-order constructs.
+    # When a hierarchical component model is estimated, the second-stage
+    # relations between each higher-order construct and its lower-order
+    # components are reported here instead of being mixed into the ordinary
+    # composite/common-factor outer model tables: reflective HOCs contribute
+    # their loadings, formative HOCs their weights.
+    - name: outerHocTable
+      title: 'Outer Model of Higher-Order Constructs (HOC)'
+      type: Table
+      clearWith:
+        - data
+        - latent
+        - composite
+        - hoc
+        - multg
+        - alt
+        - useBootstrap
+        - bootR
+        - bootCI
+        - LinearBench
+        - endogenousClass
+        - exogenousClass
+        - endogenousTerms
+        - disattenuate
+        - robustEst
+      columns:
+        - name: group
+          title: 'Group'
+          type: text
+          visible: (multg)
+        - name: construct
+          title: 'Higher-Order Construct'
+          type: text
+        - name: indicator
+          title: 'Component Construct'
           type: text
         - name: estimate
           title: 'Std estimate'
@@ -680,15 +748,117 @@ items:
           title: 'Decision (α = 5%)'
           type: text
 
+    # NEW in 1.7: Moderation analysis output group. All results of the
+    # interaction analysis are collected in a single group so they can be
+    # shown or hidden together with the 'Enable Moderation Analysis' option.
+    - name: moderationGroup
+      title: 'Moderation Analysis'
+      type: Group
+      visible: (moderationEnabled)
+      items:
+        # NEW in 1.7: Spotlight/simple effects table. Reports the conditional
+        # slope of X on Y, its standard error, t value, p value and 95%
+        # confidence interval at each selected level of the moderator.
+        - name: simpleEffectsTable
+          title: 'Simple Effects Analysis'
+          type: Table
+          visible: (moderationEnabled)
+          clearWith:
+            - data
+            - latent
+            - composite
+            - moderationEnabled
+            - modDependent
+            - modIndependent
+            - modModerator
+            - modLevels
+            - useBootstrap
+            - bootR
+            - bootCI
+            - alt
+          columns:
+            - name: level
+              title: 'Moderator Level'
+              type: text
+            - name: modValue
+              title: 'Moderator Value (z)'
+              type: number
+            - name: slope
+              title: 'Conditional Slope (Estimate)'
+              type: number
+            - name: se
+              title: 'SE'
+              type: number
+            - name: t
+              title: 't'
+              type: number
+            - name: p
+              title: 'p-value'
+              type: number
+              format: zto,pvalue
+            - name: cil
+              title: 'Lower'
+              type: number
+              superTitle: '95% Confidence Interval'
+            - name: ciu
+              title: 'Upper'
+              type: number
+              superTitle: '95% Confidence Interval'
+
+        # NEW in 1.7: Simple slopes plot. Draws the predicted value of the
+        # dependent construct against the independent construct, with one
+        # regression line per probing level of the moderator.
+        - name: simpleEffectsPlot
+          title: 'Simple Effects Slope Plot'
+          type: Image
+          width: 600
+          height: 400
+          renderFun: .plotSimpleEffects
+          visible: (moderationEnabled && showSimpleEffectsPlot)
+          clearWith:
+            - data
+            - latent
+            - composite
+            - moderationEnabled
+            - modDependent
+            - modIndependent
+            - modModerator
+            - modLevels
+            - useBootstrap
+
+        # NEW in 1.7: Floodlight (Johnson-Neyman) plot. Draws the conditional
+        # effect of X on Y across the whole range of the moderator together
+        # with its 95% confidence band and a reference line at zero, so the
+        # region of significance can be read directly from the figure.
+        - name: floodlightPlot
+          title: 'Floodlight (Johnson-Neyman) Plot'
+          type: Image
+          width: 600
+          height: 400
+          renderFun: .plotFloodlight
+          visible: (moderationEnabled && showFloodlightPlot)
+          clearWith:
+            - data
+            - latent
+            - composite
+            - moderationEnabled
+            - modDependent
+            - modIndependent
+            - modModerator
+            - useBootstrap
+
     # NEW in 1.5: Path diagram of the estimated model, rendered with
     # semPlot::semPaths() via the .plotPathDiagram render function.
     # (The legacy 'csemOutput' preformatted text element was removed in 1.5,
     # as its multigroup content is now presented in the MGA tables above.)
+    # UPDATED in 1.7: Renamed to 'SEM Diagram' and enlarged, since the render
+    # function now also draws higher-order constructs and interaction terms
+    # and applies construct-grouped indicator stacking.
     - name: pathPlot
-      title: 'Path Diagram'
+      title: 'SEM Diagram'
       type: Image
-      width: 600
-      height: 450
+      width: 750
+      height: 600
       renderFun: .plotPathDiagram
       visible: (showPlot)
       clearWith:
@@ -710,13 +880,20 @@ items:
         - showPlot
         - plotLayout
         - plotRotation
+        - plotIndicatorSpacing
+        - plotFontSize
         - showEstimates
         - showResiduals
-        - plotFontSize
         - showSigStars
         - abbreviate
         - abbrevLength
         - dataCleaningEnabled
         - cleaningMethod
+        - hoc
+        - hocApproach
+        - moderationEnabled
+        - modDependent
+        - modIndependent
+        - modModerator
 
 ...
