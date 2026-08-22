@@ -12,6 +12,8 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                 list(label="Latent1", vars=list())),
             composite = list(
                 list(label="Composite1", vars=list())),
+            hocApproach = "2stage",
+            hoc = list(),
             multg = NULL,
             mgaHenseler = TRUE,
             mgaSarstedt = FALSE,
@@ -33,15 +35,24 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
             disattenuate = FALSE,
             robustEst = FALSE,
             modes = list(),
-            showPlot = FALSE,
+            showPlot = TRUE,
             abbreviate = TRUE,
             abbrevLength = 4,
             plotLayout = "tree",
-            plotRotation = "2",
+            plotRotation = "left_right",
+            plotIndicatorSpacing = "normal",
             showEstimates = TRUE,
             showResiduals = FALSE,
             plotFontSize = "medium",
-            showSigStars = TRUE, ...) {
+            showSigStars = TRUE,
+            moderationEnabled = FALSE,
+            modDependent = "",
+            modIndependent = "",
+            modModerator = "",
+            modLevels = "sd",
+            showSimpleEffectsTable = TRUE,
+            showSimpleEffectsPlot = FALSE,
+            showFloodlightPlot = FALSE, ...) {
 
             super$initialize(
                 package="CompositeSEM",
@@ -104,6 +115,34 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                             permitted=list(
                                 "numeric",
                                 "factor")))))
+            private$..hocApproach <- jmvcore::OptionList$new(
+                "hocApproach",
+                hocApproach,
+                options=list(
+                    "2stage",
+                    "mixed"),
+                default="2stage")
+            private$..hoc <- jmvcore::OptionArray$new(
+                "hoc",
+                hoc,
+                default=list(),
+                template=jmvcore::OptionGroup$new(
+                    "hoc",
+                    NULL,
+                    elements=list(
+                        jmvcore::OptionString$new(
+                            "label",
+                            NULL),
+                        jmvcore::OptionList$new(
+                            "type",
+                            NULL,
+                            options=list(
+                                "reflective",
+                                "composite"),
+                            default="reflective"),
+                        jmvcore::OptionVariables$new(
+                            "components",
+                            NULL))))
             private$..multg <- jmvcore::OptionVariable$new(
                 "multg",
                 multg)
@@ -217,7 +256,7 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
             private$..showPlot <- jmvcore::OptionBool$new(
                 "showPlot",
                 showPlot,
-                default=FALSE)
+                default=TRUE)
             private$..abbreviate <- jmvcore::OptionBool$new(
                 "abbreviate",
                 abbreviate,
@@ -239,11 +278,19 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                 "plotRotation",
                 plotRotation,
                 options=list(
-                    "2",
-                    "1",
-                    "3",
-                    "4"),
-                default="2")
+                    "left_right",
+                    "top_down",
+                    "bottom_up",
+                    "right_left"),
+                default="left_right")
+            private$..plotIndicatorSpacing <- jmvcore::OptionList$new(
+                "plotIndicatorSpacing",
+                plotIndicatorSpacing,
+                options=list(
+                    "compact",
+                    "normal",
+                    "large"),
+                default="normal")
             private$..showEstimates <- jmvcore::OptionBool$new(
                 "showEstimates",
                 showEstimates,
@@ -264,11 +311,48 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                 "showSigStars",
                 showSigStars,
                 default=TRUE)
+            private$..moderationEnabled <- jmvcore::OptionBool$new(
+                "moderationEnabled",
+                moderationEnabled,
+                default=FALSE)
+            private$..modDependent <- jmvcore::OptionString$new(
+                "modDependent",
+                modDependent,
+                default="")
+            private$..modIndependent <- jmvcore::OptionString$new(
+                "modIndependent",
+                modIndependent,
+                default="")
+            private$..modModerator <- jmvcore::OptionString$new(
+                "modModerator",
+                modModerator,
+                default="")
+            private$..modLevels <- jmvcore::OptionList$new(
+                "modLevels",
+                modLevels,
+                options=list(
+                    "sd",
+                    "percentile"),
+                default="sd")
+            private$..showSimpleEffectsTable <- jmvcore::OptionBool$new(
+                "showSimpleEffectsTable",
+                showSimpleEffectsTable,
+                default=TRUE)
+            private$..showSimpleEffectsPlot <- jmvcore::OptionBool$new(
+                "showSimpleEffectsPlot",
+                showSimpleEffectsPlot,
+                default=FALSE)
+            private$..showFloodlightPlot <- jmvcore::OptionBool$new(
+                "showFloodlightPlot",
+                showFloodlightPlot,
+                default=FALSE)
 
             self$.addOption(private$..dataCleaningEnabled)
             self$.addOption(private$..cleaningMethod)
             self$.addOption(private$..latent)
             self$.addOption(private$..composite)
+            self$.addOption(private$..hocApproach)
+            self$.addOption(private$..hoc)
             self$.addOption(private$..multg)
             self$.addOption(private$..mgaHenseler)
             self$.addOption(private$..mgaSarstedt)
@@ -294,16 +378,27 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
             self$.addOption(private$..abbrevLength)
             self$.addOption(private$..plotLayout)
             self$.addOption(private$..plotRotation)
+            self$.addOption(private$..plotIndicatorSpacing)
             self$.addOption(private$..showEstimates)
             self$.addOption(private$..showResiduals)
             self$.addOption(private$..plotFontSize)
             self$.addOption(private$..showSigStars)
+            self$.addOption(private$..moderationEnabled)
+            self$.addOption(private$..modDependent)
+            self$.addOption(private$..modIndependent)
+            self$.addOption(private$..modModerator)
+            self$.addOption(private$..modLevels)
+            self$.addOption(private$..showSimpleEffectsTable)
+            self$.addOption(private$..showSimpleEffectsPlot)
+            self$.addOption(private$..showFloodlightPlot)
         }),
     active = list(
         dataCleaningEnabled = function() private$..dataCleaningEnabled$value,
         cleaningMethod = function() private$..cleaningMethod$value,
         latent = function() private$..latent$value,
         composite = function() private$..composite$value,
+        hocApproach = function() private$..hocApproach$value,
+        hoc = function() private$..hoc$value,
         multg = function() private$..multg$value,
         mgaHenseler = function() private$..mgaHenseler$value,
         mgaSarstedt = function() private$..mgaSarstedt$value,
@@ -329,15 +424,26 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
         abbrevLength = function() private$..abbrevLength$value,
         plotLayout = function() private$..plotLayout$value,
         plotRotation = function() private$..plotRotation$value,
+        plotIndicatorSpacing = function() private$..plotIndicatorSpacing$value,
         showEstimates = function() private$..showEstimates$value,
         showResiduals = function() private$..showResiduals$value,
         plotFontSize = function() private$..plotFontSize$value,
-        showSigStars = function() private$..showSigStars$value),
+        showSigStars = function() private$..showSigStars$value,
+        moderationEnabled = function() private$..moderationEnabled$value,
+        modDependent = function() private$..modDependent$value,
+        modIndependent = function() private$..modIndependent$value,
+        modModerator = function() private$..modModerator$value,
+        modLevels = function() private$..modLevels$value,
+        showSimpleEffectsTable = function() private$..showSimpleEffectsTable$value,
+        showSimpleEffectsPlot = function() private$..showSimpleEffectsPlot$value,
+        showFloodlightPlot = function() private$..showFloodlightPlot$value),
     private = list(
         ..dataCleaningEnabled = NA,
         ..cleaningMethod = NA,
         ..latent = NA,
         ..composite = NA,
+        ..hocApproach = NA,
+        ..hoc = NA,
         ..multg = NA,
         ..mgaHenseler = NA,
         ..mgaSarstedt = NA,
@@ -363,10 +469,19 @@ CompositeSEMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
         ..abbrevLength = NA,
         ..plotLayout = NA,
         ..plotRotation = NA,
+        ..plotIndicatorSpacing = NA,
         ..showEstimates = NA,
         ..showResiduals = NA,
         ..plotFontSize = NA,
-        ..showSigStars = NA)
+        ..showSigStars = NA,
+        ..moderationEnabled = NA,
+        ..modDependent = NA,
+        ..modIndependent = NA,
+        ..modModerator = NA,
+        ..modLevels = NA,
+        ..showSimpleEffectsTable = NA,
+        ..showSimpleEffectsPlot = NA,
+        ..showFloodlightPlot = NA)
 )
 
 CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
@@ -380,6 +495,7 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
         exactFitTable = function() private$.items[["exactFitTable"]],
         outerCompositesTable = function() private$.items[["outerCompositesTable"]],
         outerCommonFactorsTable = function() private$.items[["outerCommonFactorsTable"]],
+        outerHocTable = function() private$.items[["outerHocTable"]],
         reliabilityTable = function() private$.items[["reliabilityTable"]],
         htmtTable = function() private$.items[["htmtTable"]],
         vifModeBTable = function() private$.items[["vifModeBTable"]],
@@ -390,6 +506,7 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
         mgaDecisionTable = function() private$.items[["mgaDecisionTable"]],
         mgaOverviewTable = function() private$.items[["mgaOverviewTable"]],
         mgaTable = function() private$.items[["mgaTable"]],
+        moderationGroup = function() private$.items[["moderationGroup"]],
         pathPlot = function() private$.items[["pathPlot"]]),
     private = list(),
     public=list(
@@ -404,6 +521,8 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                 options=options,
                 name="constructsTable",
                 title="Model Structure Summary",
+                notes=list(
+                    `citation`="If you use Composite-SEM you must cite it as follows: Al Arfaj, A. A., & Alamer, A. A. (2026). Composite-SEM: A Jamovi Module (Software). https://github.com/AbdullahAlarfaj101/Composite-SEM"),
                 columns=list(
                     list(
                         `name`="type", 
@@ -649,6 +768,72 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                     list(
                         `name`="indicator", 
                         `title`="Indicator", 
+                        `type`="text"),
+                    list(
+                        `name`="estimate", 
+                        `title`="Std estimate", 
+                        `type`="number"),
+                    list(
+                        `name`="se", 
+                        `title`="SE", 
+                        `type`="number", 
+                        `visible`="(useBootstrap)"),
+                    list(
+                        `name`="cil", 
+                        `title`="Lower", 
+                        `type`="number", 
+                        `superTitle`="95% Confidence Interval", 
+                        `visible`="(useBootstrap)"),
+                    list(
+                        `name`="ciu", 
+                        `title`="Upper", 
+                        `type`="number", 
+                        `superTitle`="95% Confidence Interval", 
+                        `visible`="(useBootstrap)"),
+                    list(
+                        `name`="p", 
+                        `title`="p-value", 
+                        `type`="number", 
+                        `format`="zto,pvalue", 
+                        `visible`="(useBootstrap)"),
+                    list(
+                        `name`="t", 
+                        `title`="t", 
+                        `type`="number", 
+                        `visible`="(useBootstrap)"))))
+            self$add(jmvcore::Table$new(
+                options=options,
+                name="outerHocTable",
+                title="Outer Model of Higher-Order Constructs (HOC)",
+                clearWith=list(
+                    "data",
+                    "latent",
+                    "composite",
+                    "hoc",
+                    "multg",
+                    "alt",
+                    "useBootstrap",
+                    "bootR",
+                    "bootCI",
+                    "LinearBench",
+                    "endogenousClass",
+                    "exogenousClass",
+                    "endogenousTerms",
+                    "disattenuate",
+                    "robustEst"),
+                columns=list(
+                    list(
+                        `name`="group", 
+                        `title`="Group", 
+                        `type`="text", 
+                        `visible`="(multg)"),
+                    list(
+                        `name`="construct", 
+                        `title`="Higher-Order Construct", 
+                        `type`="text"),
+                    list(
+                        `name`="indicator", 
+                        `title`="Component Construct", 
                         `type`="text"),
                     list(
                         `name`="estimate", 
@@ -1162,12 +1347,114 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                         `name`="decision", 
                         `title`="Decision (\u03B1 = 5%)", 
                         `type`="text"))))
+            self$add(R6::R6Class(
+                inherit = jmvcore::Group,
+                active = list(
+                    simpleEffectsTable = function() private$.items[["simpleEffectsTable"]],
+                    simpleEffectsPlot = function() private$.items[["simpleEffectsPlot"]],
+                    floodlightPlot = function() private$.items[["floodlightPlot"]]),
+                private = list(),
+                public=list(
+                    initialize=function(options) {
+                        super$initialize(
+                            options=options,
+                            name="moderationGroup",
+                            title="Moderation Analysis")
+                        self$add(jmvcore::Table$new(
+                            options=options,
+                            name="simpleEffectsTable",
+                            title="Simple Effects Analysis",
+                            visible="(moderationEnabled)",
+                            clearWith=list(
+                                "data",
+                                "latent",
+                                "composite",
+                                "moderationEnabled",
+                                "modDependent",
+                                "modIndependent",
+                                "modModerator",
+                                "modLevels",
+                                "useBootstrap",
+                                "bootR",
+                                "bootCI",
+                                "alt"),
+                            columns=list(
+                                list(
+                                    `name`="level", 
+                                    `title`="Moderator Level", 
+                                    `type`="text"),
+                                list(
+                                    `name`="modValue", 
+                                    `title`="Moderator Value (z)", 
+                                    `type`="number"),
+                                list(
+                                    `name`="slope", 
+                                    `title`="Conditional Slope (Estimate)", 
+                                    `type`="number"),
+                                list(
+                                    `name`="se", 
+                                    `title`="SE", 
+                                    `type`="number"),
+                                list(
+                                    `name`="t", 
+                                    `title`="t", 
+                                    `type`="number"),
+                                list(
+                                    `name`="p", 
+                                    `title`="p-value", 
+                                    `type`="number", 
+                                    `format`="zto,pvalue"),
+                                list(
+                                    `name`="cil", 
+                                    `title`="Lower", 
+                                    `type`="number", 
+                                    `superTitle`="95% Confidence Interval"),
+                                list(
+                                    `name`="ciu", 
+                                    `title`="Upper", 
+                                    `type`="number", 
+                                    `superTitle`="95% Confidence Interval"))))
+                        self$add(jmvcore::Image$new(
+                            options=options,
+                            name="simpleEffectsPlot",
+                            title="Simple Effects Slope Plot",
+                            width=600,
+                            height=400,
+                            renderFun=".plotSimpleEffects",
+                            visible="(moderationEnabled && showSimpleEffectsPlot)",
+                            clearWith=list(
+                                "data",
+                                "latent",
+                                "composite",
+                                "moderationEnabled",
+                                "modDependent",
+                                "modIndependent",
+                                "modModerator",
+                                "modLevels",
+                                "useBootstrap")))
+                        self$add(jmvcore::Image$new(
+                            options=options,
+                            name="floodlightPlot",
+                            title="Floodlight (Johnson-Neyman) Plot",
+                            width=600,
+                            height=400,
+                            renderFun=".plotFloodlight",
+                            visible="(moderationEnabled && showFloodlightPlot)",
+                            clearWith=list(
+                                "data",
+                                "latent",
+                                "composite",
+                                "moderationEnabled",
+                                "modDependent",
+                                "modIndependent",
+                                "modModerator",
+                                "useBootstrap")))}))$new(options=options))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="pathPlot",
-                title="Path Diagram",
-                width=600,
-                height=450,
+                title="SEM Diagram",
+                width=750,
+                height=600,
                 renderFun=".plotPathDiagram",
                 visible="(showPlot)",
                 clearWith=list(
@@ -1189,14 +1476,21 @@ CompositeSEMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                     "showPlot",
                     "plotLayout",
                     "plotRotation",
+                    "plotIndicatorSpacing",
+                    "plotFontSize",
                     "showEstimates",
                     "showResiduals",
-                    "plotFontSize",
                     "showSigStars",
                     "abbreviate",
                     "abbrevLength",
                     "dataCleaningEnabled",
-                    "cleaningMethod")))}))
+                    "cleaningMethod",
+                    "hoc",
+                    "hocApproach",
+                    "moderationEnabled",
+                    "modDependent",
+                    "modIndependent",
+                    "modModerator")))}))
 
 CompositeSEMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "CompositeSEMBase",
@@ -1206,7 +1500,7 @@ CompositeSEMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             super$initialize(
                 package = "CompositeSEM",
                 name = "CompositeSEM",
-                version = c(1,5,0),
+                version = c(1,7,0),
                 options = options,
                 results = CompositeSEMResults$new(options=options),
                 data = data,
@@ -1234,6 +1528,15 @@ CompositeSEMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param composite A list containing named lists that define the \code{label}
 #'   of the composite variables and the \code{vars} that belong to that
 #'   composite.
+#' @param hocApproach The disjoint two-stage procedure used to estimate
+#'   higher-order constructs. \code{2stage} estimates the lower-order model
+#'   first and feeds the resulting construct scores into the second stage,
+#'   \code{mixed} estimates the repeated-indicator model and re-estimates the
+#'   second stage only. Forwarded to \code{cSEM::csem()} as
+#'   \code{.approach_2ndorder}.
+#' @param hoc A list containing named lists that define higher-order
+#'   constructs (\code{label}), their measurement type (\code{type}), and the
+#'   lower-order sub-constructs (\code{components}) assigned to them.
 #' @param multg .
 #' @param mgaHenseler .
 #' @param mgaSarstedt .
@@ -1263,10 +1566,37 @@ CompositeSEMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param abbrevLength .
 #' @param plotLayout .
 #' @param plotRotation .
+#' @param plotIndicatorSpacing Vertical spacing between the indicator nodes of
+#'   the path diagram. Scales the per-column stacking step so that indicator
+#'   blocks stay readable in densely measured models.
 #' @param showEstimates .
 #' @param showResiduals .
 #' @param plotFontSize .
 #' @param showSigStars .
+#' @param moderationEnabled Whether a moderation (interaction) analysis is
+#'   performed. When \code{TRUE}, the product term
+#'   \code{modIndependent.modModerator} is added automatically to the
+#'   structural equation of \code{modDependent} and the conditional effect is
+#'   probed at the levels given by \code{modLevels}.
+#' @param modDependent Name of the endogenous construct that acts as the
+#'   dependent variable (Y) of the moderated relationship.
+#' @param modIndependent Name of the construct whose effect on
+#'   \code{modDependent} is moderated (X).
+#' @param modModerator Name of the construct that moderates the effect of
+#'   \code{modIndependent} on \code{modDependent} (M).
+#' @param modLevels Values of the moderator at which the conditional effect is
+#'   evaluated. Construct scores are standardised, so \code{sd} probes at
+#'   z = -1, 0 and +1 and \code{percentile} at the z-scores of the 16th, 50th
+#'   and 84th percentile.
+#' @param showSimpleEffectsTable Whether the simple effects (spotlight) table
+#'   is reported, giving the conditional slope, its standard error, t value,
+#'   p value and 95\% confidence interval at each probing level.
+#' @param showSimpleEffectsPlot Whether the simple slopes plot is produced,
+#'   showing one predicted regression line of Y on X per probing level of the
+#'   moderator.
+#' @param showFloodlightPlot Whether the floodlight (Johnson-Neyman) plot is
+#'   produced, showing the conditional effect of X on Y across the range of
+#'   the moderator together with its 95\% confidence band.
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$constructsTable} \tab \tab \tab \tab \tab a table \cr
@@ -1276,6 +1606,7 @@ CompositeSEMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$exactFitTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$outerCompositesTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$outerCommonFactorsTable} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$outerHocTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$reliabilityTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$htmtTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$vifModeBTable} \tab \tab \tab \tab \tab a table \cr
@@ -1286,6 +1617,9 @@ CompositeSEMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$mgaDecisionTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$mgaOverviewTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$mgaTable} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$moderationGroup$simpleEffectsTable} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$moderationGroup$simpleEffectsPlot} \tab \tab \tab \tab \tab an image \cr
+#'   \code{results$moderationGroup$floodlightPlot} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$pathPlot} \tab \tab \tab \tab \tab an image \cr
 #' }
 #'
@@ -1304,6 +1638,8 @@ CompositeSEM <- function(
                 list(label="Latent1", vars=list())),
     composite = list(
                 list(label="Composite1", vars=list())),
+    hocApproach = "2stage",
+    hoc = list(),
     multg,
     mgaHenseler = TRUE,
     mgaSarstedt = FALSE,
@@ -1325,15 +1661,24 @@ CompositeSEM <- function(
     disattenuate = FALSE,
     robustEst = FALSE,
     modes = list(),
-    showPlot = FALSE,
+    showPlot = TRUE,
     abbreviate = TRUE,
     abbrevLength = 4,
     plotLayout = "tree",
-    plotRotation = "2",
+    plotRotation = "left_right",
+    plotIndicatorSpacing = "normal",
     showEstimates = TRUE,
     showResiduals = FALSE,
     plotFontSize = "medium",
-    showSigStars = TRUE) {
+    showSigStars = TRUE,
+    moderationEnabled = FALSE,
+    modDependent = "",
+    modIndependent = "",
+    modModerator = "",
+    modLevels = "sd",
+    showSimpleEffectsTable = TRUE,
+    showSimpleEffectsPlot = FALSE,
+    showFloodlightPlot = FALSE) {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
         stop("CompositeSEM requires jmvcore to be installed (restart may be required)")
@@ -1352,6 +1697,8 @@ CompositeSEM <- function(
         cleaningMethod = cleaningMethod,
         latent = latent,
         composite = composite,
+        hocApproach = hocApproach,
+        hoc = hoc,
         multg = multg,
         mgaHenseler = mgaHenseler,
         mgaSarstedt = mgaSarstedt,
@@ -1377,10 +1724,19 @@ CompositeSEM <- function(
         abbrevLength = abbrevLength,
         plotLayout = plotLayout,
         plotRotation = plotRotation,
+        plotIndicatorSpacing = plotIndicatorSpacing,
         showEstimates = showEstimates,
         showResiduals = showResiduals,
         plotFontSize = plotFontSize,
-        showSigStars = showSigStars)
+        showSigStars = showSigStars,
+        moderationEnabled = moderationEnabled,
+        modDependent = modDependent,
+        modIndependent = modIndependent,
+        modModerator = modModerator,
+        modLevels = modLevels,
+        showSimpleEffectsTable = showSimpleEffectsTable,
+        showSimpleEffectsPlot = showSimpleEffectsPlot,
+        showFloodlightPlot = showFloodlightPlot)
 
     analysis <- CompositeSEMClass$new(
         options = options,
@@ -1390,4 +1746,3 @@ CompositeSEM <- function(
 
     analysis$results
 }
-
