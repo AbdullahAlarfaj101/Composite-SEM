@@ -9,6 +9,6 @@ jamovi: '2.0.0'
 
 # A list of your analyses
 analyses:
-    - title: CompositeSEM
+    - title: Composite-SEM
       name: CompositeSEM
       ui: CompositeSEM
