@@ -18,7 +18,7 @@ items:
       title: 'Model Structure Summary'
       type: Table
       notes:
-        citation: 'If you use Composite-SEM you must cite it as follows: Al Arfaj, A. A., & Alamer, A. A. (2026). Composite-SEM: A Jamovi Module (Software). https://github.com/AbdullahAlarfaj101/Composite-SEM'
+        citation: 'If you use Composite-SEM you must cite it as follows: AlArfaj, A. A., & Alamer, A. A. (2026). Composite-SEM: A Jamovi Module (Software). https://github.com/AbdullahAlarfaj101/Composite-SEM'
       columns:
         - name: type
           title: 'Construct Type'
