@@ -6,7 +6,7 @@ jrs:   '1.1'
 # NEW in 1.5: Attach the module's own citation (defined in jamovi/refs.yaml)
 # to the analysis so it appears in the References section of the jamovi output.
 refs:
-    - CompositeSEM
+    - Composite-SEM
     - cSEM
     - Henseler2021
 
