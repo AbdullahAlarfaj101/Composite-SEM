@@ -1,7 +1,7 @@
 Package: CompositeSEM
 Type: Package
 Title: A module to estimate composites (formative/emergent) constructs and latent variables
-Version: 1.5.0
+Version: 1.7.0
 Author: Abdullah Alarfaj, Abdullah Alamer
 Maintainer: Abdullah Alarfaj <Abdullah.Alarfaj@arfajgroup.com>
 Description: Composite-SEM is a comprehensive module for jamovi designed to estimate, analyze, test, and study linear and multi-group structural equation models. Built upon the robust cSEM R package, this module brings professional-grade composite-based Structural Equation Modeling (SEM) to a user-friendly graphical interface.
