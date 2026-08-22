@@ -1,7 +1,7 @@
 ---
 name: CompositeSEM
 title: CompositeSEM
-menuGroup: CompositeSEM
+menuGroup: SEM
 version: '1.7.0'
 jas: '1.2'
 arbitraryCode: false
