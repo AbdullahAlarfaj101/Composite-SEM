@@ -29,6 +29,18 @@ PLS predcit (out-of-sample prediction): Compare PLS model performance against st
 Plot the model: You can get a visual presentation of your model with a punch of options (e.g., abbreviation, showing stars for sig value, showing estimates on paths, type of layout, font size, and more!).
 
 -----------------------------------------------------------------------------------------------------------------
+**Composite-SEM 1.7 Update**
+**What is included in 1.7**
+Refinements:
+-General Enhancements: SEM diagram now has more options including spacing between the indicators.
+-Bootstrapping has more options now
+
+New Features:
+-Hierarchical Models: Added full support for First-Order and Second-Order models. They can be modeled as latent or composite.
+
+-Moderation Analysis: New feature to test moderating effects. Including Slope plot and Floodlight plot
+
+-Menu Restructuring: The module is now placed under the "sem" menu group.
 
 **Composite-SEM 1.5 Update**
 **What is included in 1.5**
