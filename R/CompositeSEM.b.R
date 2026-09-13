@@ -57,14 +57,17 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                      
                                      endogenous_selected <- unique(normalize_terms(self$options$endogenousClass))
                                      exogenous_selected  <- unique(normalize_terms(self$options$exogenousClass))
-                                     
-                                     # UPDATED in 1.7: The role vectors are filtered in the order in which
-                                     # the user dropped the constructs into the role boxes, not in the order
-                                     # in which the constructs happen to be defined. This keeps each
-                                     # endogenous construct aligned with its own block of directional path
-                                     # terms in 'endogenousTerms', which is indexed positionally.
-                                     endogenous_labels <- endogenous_selected[endogenous_selected %in% all_labels]
-                                     exogenous_labels  <- exogenous_selected[exogenous_selected %in% all_labels]
+
+
+                                     # FIXED in 1.7.1: The role vectors must follow the order in which the
+                                     # constructs are DEFINED in the measurement model, because that is the
+                                     # order used by orderedEndogenousLabels() in jamovi/js/events.js to
+                                     # build and index the 'endogenousTerms' blocks. Ordering them by the
+                                     # order in which the user dropped them into the role boxes desynchronises
+                                     # the two, so a path block gets attached to the wrong endogenous
+                                     # construct and the estimated model is wrong (or fails outright).
+                                     endogenous_labels <- all_labels[all_labels %in% endogenous_selected]
+                                     exogenous_labels  <- all_labels[all_labels %in% exogenous_selected]
                                      
                                      endo_terms <- self$options$endogenousTerms
                                      structural_parts <- character(0)
