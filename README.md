@@ -29,6 +29,11 @@ PLS predcit (out-of-sample prediction): Compare PLS model performance against st
 Plot the model: You can get a visual presentation of your model with a punch of options (e.g., abbreviation, showing stars for sig value, showing estimates on paths, type of layout, font size, and more!).
 
 -----------------------------------------------------------------------------------------------------------------
+**Composite-SEM 1.7.1 Update**
+This is a minor update. In this version we fixed the issue related to the order
+of the defined variables, which affected the models estimation.
+
+
 **Composite-SEM 1.7 Update**
 **What is included in 1.7**
 Refinements:
