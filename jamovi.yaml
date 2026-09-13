@@ -3,7 +3,7 @@ title: Composite-based Structural Equation Modeling
 # The name of the module
 name: CompositeSEM
 # The version of the module
-version: 1.7.0
+version: 1.7.1
 # The minimum version of jamovi that this module requires
 jamovi: '2.0.0'
 
