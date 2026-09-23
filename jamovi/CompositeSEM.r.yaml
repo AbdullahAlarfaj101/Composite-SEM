@@ -40,6 +40,8 @@ items:
         - composite
         - dataCleaningEnabled
         - cleaningMethod
+        - hoc
+        - hocApproach
       columns:
         - name: property
           title: 'Property'
@@ -66,6 +68,10 @@ items:
         - endogenousTerms
         - disattenuate
         - robustEst
+        - dataCleaningEnabled
+        - cleaningMethod
+        - hoc
+        - hocApproach
       columns:
         - name: group
           title: 'Group'
@@ -96,6 +102,15 @@ items:
         - endogenousTerms
         - disattenuate
         - robustEst
+        - dataCleaningEnabled
+        - cleaningMethod
+        - hoc
+        - hocApproach
+        - modes
+        - moderationEnabled
+        - modDependent
+        - modIndependent
+        - modModerator
       columns:
         - name: group
           title: 'Group'
@@ -128,6 +143,10 @@ items:
         - endogenousClass
         - exogenousClass
         - endogenousTerms
+        - dataCleaningEnabled
+        - cleaningMethod
+        - hoc
+        - hocApproach
       columns:
         - name: group
           title: 'Group'
@@ -165,6 +184,11 @@ items:
         - disattenuate
         - robustEst
         - showCompositeLoadings
+        - dataCleaningEnabled
+        - cleaningMethod
+        - hoc
+        - hocApproach
+        - modes
       columns:
         - name: group
           title: 'Group'
@@ -225,6 +249,11 @@ items:
         - endogenousTerms
         - disattenuate
         - robustEst
+        - dataCleaningEnabled
+        - cleaningMethod
+        - hoc
+        - hocApproach
+        - modes
       columns:
         - name: group
           title: 'Group'
@@ -277,6 +306,7 @@ items:
         - latent
         - composite
         - hoc
+        - hocApproach
         - multg
         - alt
         - useBootstrap
@@ -288,6 +318,9 @@ items:
         - endogenousTerms
         - disattenuate
         - robustEst
+        - dataCleaningEnabled
+        - cleaningMethod
+        - modes
       columns:
         - name: group
           title: 'Group'
@@ -344,6 +377,11 @@ items:
         - endogenousTerms
         - disattenuate
         - robustEst
+        - dataCleaningEnabled
+        - cleaningMethod
+        - hoc
+        - hocApproach
+        - modes
       columns:
         - name: group
           title: 'Group'
@@ -385,6 +423,10 @@ items:
         - endogenousTerms
         - disattenuate
         - robustEst
+        - dataCleaningEnabled
+        - cleaningMethod
+        - hoc
+        - hocApproach
       columns:
         - name: group
           title: 'Group'
@@ -421,6 +463,11 @@ items:
         - endogenousTerms
         - disattenuate
         - robustEst
+        - dataCleaningEnabled
+        - cleaningMethod
+        - hoc
+        - hocApproach
+        - modes
       columns:
         - name: group
           title: 'Group'
@@ -454,6 +501,14 @@ items:
         - endogenousTerms
         - disattenuate
         - robustEst
+        - dataCleaningEnabled
+        - cleaningMethod
+        - hoc
+        - hocApproach
+        - moderationEnabled
+        - modDependent
+        - modIndependent
+        - modModerator
       columns:
         - name: group
           title: 'Group'
@@ -505,6 +560,15 @@ items:
         - endogenousTerms
         - disattenuate
         - robustEst
+        - dataCleaningEnabled
+        - cleaningMethod
+        - hoc
+        - hocApproach
+        - modes
+        - moderationEnabled
+        - modDependent
+        - modIndependent
+        - modModerator
       columns:
         - name: group
           title: 'Group'
@@ -568,6 +632,14 @@ items:
         - endogenousTerms
         - disattenuate
         - robustEst
+        - dataCleaningEnabled
+        - cleaningMethod
+        - hoc
+        - hocApproach
+        - moderationEnabled
+        - modDependent
+        - modIndependent
+        - modModerator
       columns:
         - name: group
           title: 'Group'
@@ -629,6 +701,10 @@ items:
         - disattenuate
         - robustEst
         - predictFolds
+        - dataCleaningEnabled
+        - cleaningMethod
+        - hoc
+        - hocApproach
       columns:
         - name: group
           title: 'Group'
@@ -675,6 +751,15 @@ items:
         - endogenousTerms
         - disattenuate
         - robustEst
+        - dataCleaningEnabled
+        - cleaningMethod
+        - hoc
+        - hocApproach
+        - mgaHenseler
+        - mgaSarstedt
+        - mgaChin
+        - mgaKeil
+        - mgaNitzl
       columns:
         - name: test
           title: 'Test Method'
@@ -701,6 +786,15 @@ items:
         - endogenousTerms
         - disattenuate
         - robustEst
+        - dataCleaningEnabled
+        - cleaningMethod
+        - hoc
+        - hocApproach
+        - mgaHenseler
+        - mgaSarstedt
+        - mgaChin
+        - mgaKeil
+        - mgaNitzl
       columns:
         - name: property
           title: 'Run Metadata / Parameter'
@@ -727,6 +821,15 @@ items:
         - endogenousTerms
         - disattenuate
         - robustEst
+        - dataCleaningEnabled
+        - cleaningMethod
+        - hoc
+        - hocApproach
+        - mgaHenseler
+        - mgaSarstedt
+        - mgaChin
+        - mgaKeil
+        - mgaNitzl
       columns:
         - name: comparison
           title: 'Comparison Pair'
@@ -776,6 +879,10 @@ items:
             - bootR
             - bootCI
             - alt
+            - hoc
+            - hocApproach
+            - dataCleaningEnabled
+            - cleaningMethod
           columns:
             - name: level
               title: 'Moderator Level'
@@ -789,21 +896,26 @@ items:
             - name: se
               title: 'SE'
               type: number
+              visible: (useBootstrap)
             - name: t
               title: 't'
               type: number
+              visible: (useBootstrap)
             - name: p
               title: 'p-value'
               type: number
               format: zto,pvalue
+              visible: (useBootstrap)
             - name: cil
               title: 'Lower'
               type: number
               superTitle: '95% Confidence Interval'
+              visible: (useBootstrap)
             - name: ciu
               title: 'Upper'
               type: number
               superTitle: '95% Confidence Interval'
+              visible: (useBootstrap)
 
         # NEW in 1.7: Simple slopes plot. Draws the predicted value of the
         # dependent construct against the independent construct, with one
@@ -825,6 +937,10 @@ items:
             - modModerator
             - modLevels
             - useBootstrap
+            - hoc
+            - hocApproach
+            - dataCleaningEnabled
+            - cleaningMethod
 
         # NEW in 1.7: Floodlight (Johnson-Neyman) plot. Draws the conditional
         # effect of X on Y across the whole range of the moderator together
@@ -846,6 +962,10 @@ items:
             - modIndependent
             - modModerator
             - useBootstrap
+            - hoc
+            - hocApproach
+            - dataCleaningEnabled
+            - cleaningMethod
 
     # NEW in 1.5: Path diagram of the estimated model, rendered with
     # semPlot::semPaths() via the .plotPathDiagram render function.
