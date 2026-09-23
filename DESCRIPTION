@@ -8,4 +8,4 @@ Description: Composite-SEM is a comprehensive module for jamovi designed to esti
 License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
-Imports: jmvcore (>= 0.8.5), R6, cSEM, stats, utils
+Imports: jmvcore (>= 0.8.5), R6, cSEM, stats, utils, graphics, lavaan, semPlot, ggplot2
