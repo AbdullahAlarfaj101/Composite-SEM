@@ -132,20 +132,43 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                        if (nzchar(mod_dep) && nzchar(mod_ind) && nzchar(mod_mod) &&
                                            mod_dep %in% all_labels && mod_ind %in% all_labels && mod_mod %in% all_labels) {
                                          
-                                         inter_term <- paste0(mod_ind, ".", mod_mod)
                                          used_labels <- unique(c(used_labels, mod_dep, mod_ind, mod_mod))
-                                         
-                                         dep_idx <- grep(paste0("^", jmvcore::composeTerm(mod_dep), " ~ "), structural_parts)
+
+                                         # FIXED: construct labels can contain characters that are regex
+                                         # metacharacters (e.g. "Well (1)", "A+B"); composeTerm() backtick-quotes
+                                         # them for cSEM's model syntax but that does not neutralise them as a
+                                         # grep() pattern, and mod_ind/mod_mod previously bypassed composeTerm()
+                                         # altogether even though the directional-path blocks above always quote
+                                         # their terms. The lookup is now an exact startsWith() match on the
+                                         # composed lhs, every piece added to the equation is quoted the same
+                                         # way as elsewhere, and "already present" compares whole terms instead
+                                         # of doing a substring search (which previously treated "A" as present
+                                         # whenever the equation already contained "AB" or "A.M").
+                                         lhs_dep     <- jmvcore::composeTerm(mod_dep)
+                                         dep_prefix  <- paste0(lhs_dep, " ~ ")
+                                         ind_term    <- jmvcore::composeTerm(mod_ind)
+                                         mod_term    <- jmvcore::composeTerm(mod_mod)
+                                         # Quoted as one combined token from the raw "X.M" string, exactly
+                                         # like the directional-path block above (line ~91/114) does for its
+                                         # own interaction terms — NOT as two separately-quoted names joined
+                                         # by a dot, which would produce a different token (e.g. `Well (1)`.`M`
+                                         # instead of `Well (1).M`) and break the "X.M"-splitting lookups used
+                                         # later in the moderation analysis block.
+                                         inter_term  <- jmvcore::composeTerm(paste0(mod_ind, ".", mod_mod))
+
+                                         dep_idx <- which(startsWith(structural_parts, dep_prefix))
                                          if (length(dep_idx) > 0) {
-                                           curr_eq <- structural_parts[dep_idx]
-                                           for (term_to_add in c(mod_ind, mod_mod, inter_term)) {
-                                             if (!grepl(term_to_add, curr_eq, fixed = TRUE)) {
+                                           curr_eq <- structural_parts[dep_idx[1]]
+                                           existing_terms <- strsplit(substring(curr_eq, nchar(dep_prefix) + 1), " + ", fixed = TRUE)[[1]]
+                                           for (term_to_add in c(ind_term, mod_term, inter_term)) {
+                                             if (!(term_to_add %in% existing_terms)) {
                                                curr_eq <- paste0(curr_eq, " + ", term_to_add)
+                                               existing_terms <- c(existing_terms, term_to_add)
                                              }
                                            }
-                                           structural_parts[dep_idx] <- curr_eq
+                                           structural_parts[dep_idx[1]] <- curr_eq
                                          } else {
-                                           new_eq <- paste0(jmvcore::composeTerm(mod_dep), " ~ ", mod_ind, " + ", mod_mod, " + ", inter_term)
+                                           new_eq <- paste0(dep_prefix, ind_term, " + ", mod_term, " + ", inter_term)
                                            structural_parts <- c(structural_parts, new_eq)
                                          }
                                        }
@@ -1693,7 +1716,13 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                            testMGD_patched <- cSEM::testMGD
                                            body_str <- deparse(body(testMGD_patched))
                                            target_idx <- grep("n <- nrow\\(path_resamples\\)", body_str)
-                                           if (length(target_idx) > 0) {
+                                           # FIXED: this patch depends on the exact source text of a function
+                                           # this module does not control. If a future cSEM release rewords
+                                           # that line, target_idx comes back empty and the patch silently does
+                                           # not apply (mgd_patch_applied is recorded here so the MGA-failure
+                                           # branch below can tell the user, instead of just failing quietly).
+                                           mgd_patch_applied <- length(target_idx) > 0
+                                           if (mgd_patch_applied) {
                                              body_str[target_idx] <- "n <- if (!is.null(path_resamples)) nrow(path_resamples) else if (!is.null(loading_resamples)) nrow(loading_resamples) else nrow(weight_resamples)"
                                              body(testMGD_patched) <- parse(text = paste(body_str, collapse = "\n"))
                                            }
@@ -1718,10 +1747,22 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                            
                                            if (!is.null(mga_error)) {
                                              clean_msg <- paste0(
-                                               "Multi-Group Analysis failed: ", mga_error, 
+                                               "Multi-Group Analysis failed: ", mga_error,
                                                ". Please verify your grouping variable has adequate sample size per group, check for missing values, or choose a different missing data handling method."
                                              )
-                                             jmvcore::reject(clean_msg)
+                                             # FIXED: this used to call jmvcore::reject(), which marks the
+                                             # entire analysis as failed and greys out the per-group loadings,
+                                             # paths, fit indices and reliability that had already been
+                                             # computed successfully — because of this secondary MGA step
+                                             # failing. It is now reported as a note on the MGA tables instead,
+                                             # so .run() completes and the main results stay visible.
+                                             mgaDecisionTable$setVisible(TRUE)
+                                             mgaDecisionTable$setNote("mgaError", clean_msg)
+                                             mgaOverviewTable$setVisible(!mgd_patch_applied)
+                                             if (!mgd_patch_applied) {
+                                               mgaOverviewTable$setNote("patchNote", "The internal one-line patch that lets Multi-Group Analysis run on a model without structural paths (a correlated/path-free model) could not be applied for this version of cSEM, which may be why the test above failed.")
+                                             }
+                                             mgaTable$setVisible(FALSE)
                                            } else if (!is.null(mga_res)) {
                                              
                                              mgaDecisionTable$setVisible(TRUE)
@@ -1914,7 +1955,7 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                       # grid of moderator values yields the Johnson-Neyman (floodlight)
                                       # band. The block runs outside the estimation tryCatch, so a
                                       # moderation failure can never suppress the main results.
-                                      if (isTRUE(self$options$moderationEnabled)) {
+                                      if (isTRUE(self$options$moderationEnabled) && length(groups) > 0) {
                                         modGroup <- self$results$moderationGroup
                                         simpleTable <- modGroup$simpleEffectsTable
                                         simpleTable$deleteRows()
@@ -1974,36 +2015,70 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                             b1 <- as.numeric(r_ind$Estimate)
                                             b2 <- if (!is.null(r_mod)) as.numeric(r_mod$Estimate) else 0
                                             b3 <- as.numeric(r_int$Estimate)
-                                            
-                                            se1 <- if ("Std_err" %in% names(r_ind) && !is.na(r_ind$Std_err)) as.numeric(r_ind$Std_err) else if ("Std. error" %in% names(r_ind) && !is.na(r_ind$`Std. error`)) as.numeric(r_ind$`Std. error`) else 0.1
-                                            se3 <- if ("Std_err" %in% names(r_int) && !is.na(r_int$Std_err)) as.numeric(r_int$Std_err) else if ("Std. error" %in% names(r_int) && !is.na(r_int$`Std. error`)) as.numeric(r_int$`Std. error`) else 0.1
-                                            
+
+                                            # FIXED: cSEM::summarize() only attaches Std_err when bootstrapping
+                                            # is enabled, and even then not always (e.g. a second-stage path of
+                                            # a hierarchical model). This used to fall back to a literal 0.1,
+                                            # fabricating SE/t/p/CI values with no basis in the data. Now the
+                                            # bootstrap inference result is tried first via get_inf_stat() (the
+                                            # same recovery the other tables use), and if that is unavailable
+                                            # too, the standard error is left NA so the table reports missing
+                                            # inference instead of inventing it.
+                                            inf_obj_mod <- if (exists("inf_res", envir = .run_env) && !is.null(.run_env$inf_res)) {
+                                              if (is_multi) .run_env$inf_res[[groups[1]]] else .run_env$inf_res
+                                            } else NULL
+
+                                            resolve_mod_se <- function(row) {
+                                              if ("Std_err" %in% names(row) && !is.na(row$Std_err)) return(as.numeric(row$Std_err))
+                                              if ("Std. error" %in% names(row) && !is.na(row$`Std. error`)) return(as.numeric(row$`Std. error`))
+                                              if (isTRUE(useBootstrap)) {
+                                                val <- get_inf_stat(inf_obj_mod, "Path_estimates", "sd", row$Name)
+                                                if (!is.na(val)) return(as.numeric(val))
+                                              }
+                                              NA_real_
+                                            }
+
+                                            se1 <- resolve_mod_se(r_ind)
+                                            se3 <- resolve_mod_se(r_int)
+                                            se_available <- !is.na(se1) && !is.na(se3)
+                                            simpleTable$setNote("modSeNote", if (se_available) NULL else
+                                              "Standard errors, t, p and the confidence interval require bootstrapping (and are not always available when the moderation is added to a second-stage path of a hierarchical model). Enable Bootstrapping to obtain inference for the conditional slopes.")
+
                                             # Probing points on the standardised moderator scale. The
                                             # percentile option uses the z-scores of the 16th/50th/84th
                                             # percentile of the standard normal distribution.
                                             z_vals <- if (modLevels == "percentile") c(-0.994, 0, 0.994) else c(-1, 0, 1)
                                             z_labels <- if (modLevels == "percentile") c("16th Percentile (Low)", "50th Percentile (Mean)", "84th Percentile (High)") else c("-1 SD (Low)", "Mean (0)", "+1 SD (High)")
-                                            
+
                                             for (k in seq_along(z_vals)) {
                                               zv <- z_vals[k]
                                               lbl <- z_labels[k]
-                                              
+
                                               slope <- b1 + b3 * zv
-                                              se_slope <- sqrt(se1^2 + (zv * se3)^2)
-                                              t_val <- slope / se_slope
-                                              p_val <- 2 * pnorm(abs(t_val), lower.tail = FALSE)
-                                              cil <- slope - 1.96 * se_slope
-                                              ciu <- slope + 1.96 * se_slope
-                                              
+
+                                              if (se_available) {
+                                                se_slope <- sqrt(se1^2 + (zv * se3)^2)
+                                                t_val <- slope / se_slope
+                                                p_val <- 2 * pnorm(abs(t_val), lower.tail = FALSE)
+                                                cil <- slope - 1.96 * se_slope
+                                                ciu <- slope + 1.96 * se_slope
+                                              } else {
+                                                se_slope <- NA_real_
+                                                t_val <- NA_real_
+                                                p_val <- NA_real_
+                                                cil <- NA_real_
+                                                ciu <- NA_real_
+                                              }
+
                                               simpleTable$addRow(rowKey = paste0("mod_lvl_", k), values = list(
                                                 level = lbl,
                                                 modValue = zv,
                                                 slope = slope,
-                                                se = se_slope,
-                                                t = t_val,
-                                                p = p_val,
-                                                cil = cil,
-                                                ciu = ciu
+                                                se = safe_num(se_slope),
+                                                t = safe_num(t_val),
+                                                p = safe_num(p_val),
+                                                cil = safe_num(cil),
+                                                ciu = safe_num(ciu)
                                               ))
                                             }
                                             
@@ -2031,12 +2106,19 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                             # boundaries of the region of significance.
                                             m_seq <- seq(-3, 3, length.out = 100)
                                             slopes_flood <- b1 + b3 * m_seq
-                                            se_flood <- sqrt(se1^2 + (m_seq * se3)^2)
+                                            if (se_available) {
+                                              se_flood    <- sqrt(se1^2 + (m_seq * se3)^2)
+                                              lower_flood <- slopes_flood - 1.96 * se_flood
+                                              upper_flood <- slopes_flood + 1.96 * se_flood
+                                            } else {
+                                              lower_flood <- rep(NA_real_, length(m_seq))
+                                              upper_flood <- rep(NA_real_, length(m_seq))
+                                            }
                                             df_flood <- data.frame(
                                               m = m_seq,
                                               slope = slopes_flood,
-                                              lower = slopes_flood - 1.96 * se_flood,
-                                              upper = slopes_flood + 1.96 * se_flood
+                                              lower = lower_flood,
+                                              upper = upper_flood
                                             )
                                             modGroup$floodlightPlot$setState(list(
                                               df_flood = df_flood,
@@ -2203,10 +2285,28 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                            # The synthetic indicators are recorded in 'dummy_manifests' and
                                            # are removed again from the parameter table before the diagram
                                            # is drawn, so they never appear in the figure.
-                                           plot_df <- as.data.frame(working_data)
-                                           model_terms <- unique(unlist(strsplit(model_lavaan, "[\n~+ \t\r]+")))
-                                           dot_terms <- model_terms[grepl(".", model_terms, fixed = TRUE)]
+                                           #
+                                           # FIXED: this used to copy the entire cleaned dataset into plot_df
+                                           # (plus one rnorm() column per interaction term) and store that in
+                                           # image$state, which jamovi serialises into the saved .omv file —
+                                           # so every saved analysis carried a second copy of the data, growing
+                                           # with the user's dataset for no visual benefit. lavaan::sem(...,
+                                           # do.fit = FALSE) below never fits anything to the values; it only
+                                           # needs a data.frame whose columns match the manifest variables
+                                           # named in the model syntax. A small synthetic frame of random
+                                           # values does that job at a fixed, tiny size instead.
+                                           model_terms    <- unique(unlist(strsplit(model_lavaan, "[\n~+ \t\r]+")))
+                                           model_terms    <- model_terms[nzchar(model_terms)]
+                                           manifest_vars  <- model_terms[model_terms %in% names(working_data)]
+                                           dot_terms      <- model_terms[grepl(".", model_terms, fixed = TRUE)]
                                            dummy_manifests <- character(0)
+
+                                           n_synth_rows <- 10
+                                           plot_df <- as.data.frame(matrix(
+                                             stats::rnorm(n_synth_rows * length(manifest_vars)),
+                                             nrow = n_synth_rows,
+                                             dimnames = list(NULL, manifest_vars)
+                                           ))
 
                                            for (dt in dot_terms) {
                                              if (nzchar(dt)) {
@@ -2776,8 +2876,16 @@ CompositeSEMClass <- R6::R6Class("CompositeSEMClass",
                                       if (is.null(df_flood) || nrow(df_flood) == 0)
                                         return(FALSE)
                                       
-                                      p <- ggplot2::ggplot(df_flood, ggplot2::aes(x = m, y = slope)) +
-                                        ggplot2::geom_ribbon(ggplot2::aes(ymin = lower, ymax = upper), fill = "#4a90e2", alpha = 0.25) +
+                                      p <- ggplot2::ggplot(df_flood, ggplot2::aes(x = m, y = slope))
+
+                                      # FIXED: the CI band is only drawn when df_flood actually carries a
+                                      # standard-error-based interval; .run() sets lower/upper to NA when no
+                                      # real SE was available, and a ribbon drawn from NA bounds is misleading.
+                                      if (!all(is.na(df_flood$lower)) && !all(is.na(df_flood$upper))) {
+                                        p <- p + ggplot2::geom_ribbon(ggplot2::aes(ymin = lower, ymax = upper), fill = "#4a90e2", alpha = 0.25)
+                                      }
+
+                                      p <- p +
                                         ggplot2::geom_line(color = "#1f4e79", linewidth = 1.2) +
                                         ggplot2::geom_hline(yintercept = 0, linetype = "dashed", color = "#d9534f", linewidth = 0.8) +
                                         ggplot2::labs(
