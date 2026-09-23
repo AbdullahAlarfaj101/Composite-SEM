@@ -1500,7 +1500,7 @@ CompositeSEMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             super$initialize(
                 package = "CompositeSEM",
                 name = "CompositeSEM",
-                version = c(1,7,0),
+                version = c(1,7,1),
                 options = options,
                 results = CompositeSEMResults$new(options=options),
                 data = data,
